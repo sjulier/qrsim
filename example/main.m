@@ -20,7 +20,7 @@ N = 3000;
 
 wp = state.platforms{1}.getX(1:3);
 
-% creat PID controller omainbject
+% creat PID controller mainobject
 pid = WaypointPID(state.DT);
 
 tstart = tic;
