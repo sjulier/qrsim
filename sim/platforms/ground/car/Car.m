@@ -1,20 +1,17 @@
-classdef Pelican<Steppable & Platform
-    % Class that implementatios dynamic and sensors of an AscTec Pelican quadrotor
-    % The parameters are derived from the system identification of one of
-    % the UCL quadrotors
+classdef Car<Steppable & Platform
+    % Class that implementatios dynamic and sensors of a generic car
     %
     % Pelican Properties:
-    % X   - state = [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
+    % X   - state = [px;py;pz;phi;theta;psi]
     %       px,py,pz         [m]     position (NED coordinates)
     %       phi,theta,psi    [rad]   attitude in Euler angles right-hand ZYX convention
     %       u,v,w            [m/s]   velocity in body coordinates
     %       p,q,r            [rad/s] rotational velocity  in body coordinates
     %       thrust           [N]     rotors thrust
     %
-    % eX  - estimated state = [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;
-    %                          ~h;~pxdot;~pydot;~hdot]
+    % eX  - estimated state = [~px;~py;~pz;~theta]
     %       ~px,~py,~pz      [m]     position estimated by GPS (NED coordinates)
-    %       ~phi,~theta,~psi [rad]   estimated attitude in Euler angles right-hand ZYX convention
+    %       ~theta           [rad]   estimated attitude in Euler angles right-hand ZYX convention
     %       0,0,0                    placeholder (the uav does not provide velocity estimation)
     %       ~p,~q,~r         [rad/s] measured rotational velocity in body coordinates
     %       0                        placeholder (the uav does not provide thrust estimation)
@@ -41,49 +38,40 @@ classdef Pelican<Steppable & Platform
     %    getEXasX()         - returns the estimated state (noisy) formatted as the noiseless state    
     %
     properties (Constant)
-        CONTROL_LIMITS = [-0.9,0.9; -0.9,0.9; 0,1; -4.5,4.5; 9,12]; %limits of the control inputs
-        SI_2_UAVCTRL = [-1/degsToRads(0.025);-1/degsToRads(0.025);4097;-1/degsToRads(254.760/2047);1]; % conversion factors
-        BATTERY_RANGE = [9,12]; % range of valid battery values volts
-        % The parameters of the system dynamics are defined in the
-        % pelicanODE function
-        G = 9.81;    %  gravity m/s^2
-        MASS = 1.68; %  mass of the platform Kg
+        WHEEL_BASE = 2; % the wheelbase between the front and rear wheels
         labels = {'px','py','pz','phi','theta','psi','u','v','w','p','q','r','thrust'};
     end
     
     properties (Access = protected)
         gpsreceiver; % handle to the gps receiver
-        aerodynamicTurbulence;  % handle to the aerodynamic turbulence
         ahars ;      % handle to the attitude heading altitude reference system
-        graphics;    % handle to the quadrotor graphics
-        a;           % linear accelerations in body coordinates [ax;ay;az]
+        graphics;    % handle to the vehicle graphics
         collisionD;  % distance from any other object that defines a collision
         dynNoise;    % standard deviation of the noise dynamics
         behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
-        prngIds;     %ids of the prng stream used by this object
-        stateLimits; % 13 by 2 vector of allowed values of the state
-        X;           % state [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
-        eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
+        prngIds;     % ids of the prng stream used by this object
+        stateLimits; % FIX FOR WHEEL SPEED AND STEER ANGLE 13 by 2 vector of allowed values of the state
+        X;           % state [px;py;pz;phi;theta;psi]
+        eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi]
         valid;       % the state of the platform is invalid
         graphicsOn;  % true if graphics is on
     end
     
     methods (Access = public)
-        function obj = Pelican(objparams)
+        function obj = Car(objparams)
             % constructs the platform object and initialises its subcomponent
             % The configuration of the type and parameters of the subcomponents are read
-            % from the platform config file e.g. pelican_config.m
+            % from the platform config file e.g. car_config.m
             %
             % Example:
             %
             %   obj=Pelican(objparams);
             %                objparams.dt - timestep of this object
             %                objparams.on - 1 if the object is active
-            %                objparams.aerodynamicturbulence - aerodynamicturbulence parameters
             %                objparams.sensors.ahars - ahrs parameters
             %                objparams.sensors.gpsreceiver - gps receiver parameters
             %                objparams.graphics - graphics parameters
-            %                objparams.stateLimits - 13 by 2 vector of allowed values of the state
+            %                objparams.stateLimits - FIX FOR WHEEL SPEED AND STEER ANGLE 13 by 2 vector of allowed values of the state
             %                objparams.collisionDistance - distance from any other object that defines a collision
             %                objparams.dynNoise -  standard deviation of the noise dynamics
             %                objparams.state - handle to simulator state
@@ -95,15 +83,15 @@ classdef Pelican<Steppable & Platform
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
             
-            assert(isfield(objparams,'stateLimits'),'pelican:nostatelimits',...
+            assert(isfield(objparams,'stateLimits'),'car:nostatelimits',...
                 'the platform config file must define the stateLimits parameter');
             obj.stateLimits = objparams.stateLimits;
             
-            assert(isfield(objparams,'collisionDistance'),'pelican:nocollisiondistance',...
+            assert(isfield(objparams,'collisionDistance'),'car:nocollisiondistance',...
                 'the platform config file must define the collisionDistance parameter');
             obj.collisionD = objparams.collisionDistance;
             
-            assert(isfield(objparams,'dynNoise'),'pelican:nodynnoise',...
+            assert(isfield(objparams,'dynNoise'),'car:nodynnoise',...
                 'the platform config file must define the dynNoise parameter');
             obj.dynNoise = objparams.dynNoise;
             
@@ -111,35 +99,13 @@ classdef Pelican<Steppable & Platform
                 obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
             end
             
-            %instantiation of sensor and wind objects, with some "manual" type checking
-            
-            % TURBULENCE
-            objparams.aerodynamicturbulence.DT = objparams.DT;
-            objparams.aerodynamicturbulence.dt = objparams.dt;
-            objparams.aerodynamicturbulence.state = objparams.state;
-            if(objparams.aerodynamicturbulence.on)
-                
-                assert(isfield(objparams.aerodynamicturbulence,'type'),'pelican:noaerodynamicturbulencetype',...
-                    'the platform config file must define an aerodynamicturbulence.type ');
-                
-                limits = obj.simState.environment.area.getLimits();
-                objparams.aerodynamicturbulence.zOrigin = limits(6);
-                
-                tmp = feval(objparams.aerodynamicturbulence.type, objparams.aerodynamicturbulence);
-                if(isa(tmp,'AerodynamicTurbulence'))
-                    obj.aerodynamicTurbulence = tmp;
-                else
-                    error('c.aerodynamicturbulence.type has to extend the class AerodynamicTurbulence');
-                end
-            else
-                obj.aerodynamicTurbulence = feval('AerodynamicTurbulence', objparams.aerodynamicturbulence);
-            end
+            %instantiation of sensor and wind objects, with some "manual" type checking            
             
             % AHARS
-            assert(isfield(objparams.sensors,'ahars')&&isfield(objparams.sensors.ahars,'on'),'pelican:noahars',...
+            assert(isfield(objparams.sensors,'ahars')&&isfield(objparams.sensors.ahars,'on'),'car:noahars',...
                 'the platform config file must define an ahars');
             objparams.sensors.ahars.DT = objparams.DT;
-            assert(isfield(objparams.sensors.ahars,'type'),'pelican:noaharstype',...
+            assert(isfield(objparams.sensors.ahars,'type'),'car:noaharstype',...
                 'the platform config file must define an ahars.type');
             objparams.sensors.ahars.state = objparams.state;
             tmp = feval(objparams.sensors.ahars.type,objparams.sensors.ahars);
