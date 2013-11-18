@@ -7,7 +7,6 @@ classdef Car<Steppable & Platform
     %       phi,theta,psi    [rad]   attitude in Euler angles right-hand ZYX convention
     %       u,v,w            [m/s]   velocity in body coordinates
     %       p,q,r            [rad/s] rotational velocity  in body coordinates
-    %       thrust           [N]     rotors thrust
     %
     % eX  - estimated state = [~px;~py;~pz;~theta]
     %       ~px,~py,~pz      [m]     position estimated by GPS (NED coordinates)
@@ -29,7 +28,7 @@ classdef Car<Steppable & Platform
     %       bat [9..12]        [Volts] battery voltage
     %
     % Pelican Methods:
-    %    Pelican(objparams) - constructs object
+    %    Car(objparams)     - constructs object
     %    reset()            - resets all the platform subcomponents
     %    setX(X)            - reinitialise the current state and noise
     %    isValid()          - true if the state is valid
@@ -65,7 +64,7 @@ classdef Car<Steppable & Platform
             %
             % Example:
             %
-            %   obj=Pelican(objparams);
+            %   obj=Car(objparams);
             %                objparams.dt - timestep of this object
             %                objparams.on - 1 if the object is active
             %                objparams.sensors.ahars - ahrs parameters
@@ -99,7 +98,7 @@ classdef Car<Steppable & Platform
                 obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
             end
             
-            %instantiation of sensor and wind objects, with some "manual" type checking            
+            %instantiation of sensor objects, with some "manual" type checking            
             
             % AHARS
             assert(isfield(objparams.sensors,'ahars')&&isfield(objparams.sensors.ahars,'on'),'car:noahars',...
@@ -116,7 +115,7 @@ classdef Car<Steppable & Platform
             end
             
             % GPS
-            assert(isfield(objparams.sensors,'gpsreceiver')&&isfield(objparams.sensors.gpsreceiver,'on'),'pelican:nogpsreceiver',...
+            assert(isfield(objparams.sensors,'gpsreceiver')&&isfield(objparams.sensors.gpsreceiver,'on'),'car:nogpsreceiver',...
                 'the platform config file must define a gps receiver if not needed set gpsreceiver.on = 0');
             objparams.sensors.gpsreceiver.DT = objparams.DT;
             objparams.sensors.gpsreceiver.state = objparams.state;
@@ -137,13 +136,13 @@ classdef Car<Steppable & Platform
             end
             
             % GRAPHICS
-            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'pelican:nographics',...
+            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'car:nographics',...
                 'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
             objparams.graphics.DT = objparams.DT;
             objparams.graphics.state = objparams.state;
             if(objparams.graphics.on)
                 obj.graphicsOn = 1;
-                assert(isfield(objparams.graphics,'type'),'pelican:nographicstype',...
+                assert(isfield(objparams.graphics,'type'),'car:nographicstype',...
                     'the platform config file must define a graphics.type');
                 obj.graphics=feval(objparams.graphics.type,objparams.graphics);
             else
@@ -153,7 +152,7 @@ classdef Car<Steppable & Platform
         
         function X = getX(obj,varargin)
             % returns the state (noiseless)
-            % X = [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
+            % X = [px;py;pz;phi;theta;psi]
             %
             % Examples
             %    allX = obj.getX(); returns the whole state vector
@@ -212,33 +211,30 @@ classdef Car<Steppable & Platform
             %           if the length of the X vector is 6, all the velocities are set to zero
             %
             
-            assert((size(X,1)==6)||(size(X,1)==12)||(size(X,1)==13),'pelican:wrongsetstate',...
-                'setState() on a pelican object requires an input of length 6, 12 or 13 instead we have %d',size(X,1));
+            assert((size(X,1)==4)||(size(X,1)==6),'car:wrongsetstate',...
+                'setState() on a pelican object requires an input of length 4 or 6 instead we have %d',size(X,1));
             
-            assert(obj.thisStateIsWithinLimits(X),'pelican:settingoobstate',...
-                'the state passed through setState() is not valid (i.e. out of limits)');
+            %assert(obj.thisStateIsWithinLimits(X),'car:settingoobstate',...
+            %    'the state passed through setState() is not valid (i.e. out of limits)');
             
-            if(size(X,1)==6)
-                X = [X;zeros(6,1)];
+            if(size(X,4)==6)
+                X = [X;zeros(2,1)];
             end
             
-            if(size(X,1)==12)
-                X = [X;abs(obj.MASS*obj.G)];
-            end
+            X = [X; zeros(6,1)];
             
             obj.X = X;
             
             % set things
+            if (false)
             obj.gpsreceiver.setState(X);
-            obj.ahars.setState(X);            
-            obj.aerodynamicTurbulence.setState(obj.X);
+            obj.ahars.setState(X);  
             
-            obj.a  = zeros(3,1);
+            %obj.a  = zeros(3,1);
             
             
             % now rest to make sure components are initialised correctly
             obj.gpsreceiver.reset();
-            obj.aerodynamicTurbulence.reset();
             obj.ahars.reset();
             obj.resetAdditional();            
             
@@ -249,6 +245,7 @@ classdef Car<Steppable & Platform
             obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
                 estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
             
+            end
             obj.valid = 1;
             
             % clean the trajectory plot if any
@@ -265,7 +262,7 @@ classdef Car<Steppable & Platform
             % Example:
             %   obj.reset();
             %
-            assert(false,'pelican:rset',['A platform ca not be simply reset since that would its state undefined',...
+            assert(false,'car:rset',['A platform ca not be simply reset since that would its state undefined',...
                 ' use setX instead, that will take care of resetting what necessary']);
         end
         
@@ -274,81 +271,6 @@ classdef Car<Steppable & Platform
             d = obj.collisionD;
         end
     end
-    
-    methods (Sealed,Access=protected)
-        
-        function US = scaleControls(obj,U)
-            % scales the controls from SI units to what required by the ODE model
-            % The dynamic equations (and the real model) require the following input ranges
-            % pt  [-2048..2048] 1=4.36332313e-4 rad = 0.25 deg commanded pitch
-            % rl  [-2048..2048] 1=4.36332313e-4 rad = 0.25 deg commanded roll
-            % th  [0..4096] 1=4.36332313e-4 rad = 0.25 deg commanded throttle
-            % ya  [-2048..2048] 1=2.17109414e-3 rad/s = 0.124394531 deg/s commanded yaw velocity
-            % bat [9..12] Volts battery voltage
-            %
-             assert(size(U,1)==5,'pelican:inputoob','wrong size of control inputs should be 5xN\n\tU = [pt;rl;th;ya;bat] \n');
-             
-             for i = 1:size(U,2),
-             assert(~(any(U(:,i)<obj.CONTROL_LIMITS(:,1)) || any(U(:,i)>obj.CONTROL_LIMITS(:,2))),...
-                'pelican:inputoob',['control inputs values not within limits \n',...
-                '\tU = [pt;rl;th;ya;bat] \n\n\tpt  [-0.9..0.9] rad commanded pitch \n\trl  [-0.9..0.9] rad commanded roll \n',...
-                '\tth  [0..1] unitless commanded throttle \n\tya  [-4.5..4.5] rad/s commanded yaw velocity \n\tbat [9..12] Volts battery voltage \n']);
-            end
-            
-            US = U.*obj.SI_2_UAVCTRL;
-        end
-        
-        function valid = thisStateIsWithinLimits(obj,X)
-            % returns 0 if the state is out of bounds
-            to = min(size(X,1),size(obj.stateLimits,1));
-            
-            valid = all(X(1:to)>=obj.stateLimits(1:to,1)) && all(X(1:to)<=obj.stateLimits(1:to,2));
-
-        end
-        
-        function coll = inCollision(obj)
-            % returns 1 if a collision is occourring
-            coll = 0;
-            for i=1:length(obj.simState.platforms),
-                if(obj.simState.platforms{i} ~= obj)
-                    if(norm(obj.simState.platforms{i}.X(1:3)-obj.X(1:3))< obj.collisionD)
-                        coll = 1;
-                    end
-                end
-            end
-        end
-        
-        function obj = printStateNotValidError(obj)
-            % display state error info
-            if(strcmp(obj.behaviourIfStateNotValid,'continue'))
-                
-            else
-                if(strcmp(obj.behaviourIfStateNotValid,'error'))
-                    if(obj.inCollision())
-                        error('platform state not valid, in collision!\n');
-                    else
-                        error('platform state not valid, values out of bounds!\n');
-                    end
-                else
-                    if(obj.inCollision())
-                        fprintf(['warning: platform state not valid, in collision!\n Normally this should not happen; ',...
-                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
-                    else
-                        ids = (obj.X(1:12) < obj.stateLimits(:,1)) | (obj.X(1:12) > obj.stateLimits(:,2));
-                        problematics = '';
-                        for k=1:size(ids)
-                            if(ids(k))
-                                problematics = [problematics,',',obj.labels{k}]; %#ok<AGROW>
-                            end
-                        end
-                        fprintf(['warning: platform state not valid, values out of bounds (',problematics,')!\n',num2str(obj.X'),'\nNormally this should not happen; ',...
-                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
-                    end
-                end
-            end
-        end
-    end
-    
     methods (Access=protected)
         
         function obj=resetAdditional(obj)
@@ -439,4 +361,3 @@ classdef Car<Steppable & Platform
         end        
     end
 end
-
