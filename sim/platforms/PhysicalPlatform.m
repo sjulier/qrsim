@@ -1,0 +1,123 @@
+classdef PhysicalPlatform<Steppable & Platform
+    % Class that implements a physical platform. The base platform
+    % interface is very sparse, and this currently packs out with other
+    % methods.
+    %
+    
+    properties (Access = protected)
+        graphics;    % handle to the graphics
+        collisionD;  % distance from any other object that defines a collision
+        behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
+        prngIds;     %ids of the prng stream used by this object
+        X;           % state [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
+        valid;       % the state of the platform is invalid
+        graphicsOn;  % true if graphics is on
+    end
+    
+    methods (Access = public)
+        function obj = PhysicalPlatform(objparams)
+            % constructs the platform object and initialises its subcomponent
+            % The configuration of the type and parameters of the subcomponents are read
+            % from the platform config file e.g. pelican_config.m
+            %
+            % Example:
+            %
+            %   obj=PhysicalPlatform(objparams);
+            %                objparams.dt - timestep of this object
+            %                objparams.on - 1 if the object is active
+            %                objparams.aerodynamicturbulence - aerodynamicturbulence parameters
+            %                objparams.sensors.ahars - ahrs parameters
+            %                objparams.sensors.gpsreceiver - gps receiver parameters
+            %                objparams.graphics - graphics parameters
+            %                objparams.stateLimits - 13 by 2 vector of allowed values of the state
+            %                objparams.collisionDistance - distance from any other object that defines a collision
+            %                objparams.dynNoise -  standard deviation of the noise dynamics
+            %                objparams.state - handle to simulator state
+            %
+            
+            obj=obj@Steppable(objparams);
+            obj=obj@Platform(objparams);
+        end
+        
+        function X = getX(obj,varargin)
+            % returns the state (noiseless)
+            % X = [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
+            %
+            % Examples
+            %    allX = obj.getX(); returns the whole state vector
+            %  shortX = obj.getX(1:3); returns only the first three elements of teh state vector
+            %
+            if(isempty(varargin))
+                X = obj.X;
+            else
+                X = obj.X(varargin{1});
+            end
+        end
+        
+        
+        function obj = setX(obj,X)
+           % used by subclasses to reset additional stuff 
+        end    
+    end
+    
+    methods (Access=protected)
+        
+        function coll = inCollision(obj)
+            % returns 1 if a collision is occourring
+            coll = 0;
+            for i=1:length(obj.simState.platforms),
+                if(obj.simState.platforms{i} ~= obj)
+                    if(norm(obj.simState.platforms{i}.X(1:3)-obj.X(1:3))< obj.collisionD)
+                        coll = 1;
+                    end
+                end
+            end
+        end
+        
+        function obj = printStateNotValidError(obj)
+            % display state error info
+            if(strcmp(obj.behaviourIfStateNotValid,'continue'))
+                
+            else
+                if(strcmp(obj.behaviourIfStateNotValid,'error'))
+                    if(obj.inCollision())
+                        error('platform state not valid, in collision!\n');
+                    else
+                        error('platform state not valid, values out of bounds!\n');
+                    end
+                else
+                    if(obj.inCollision())
+                        fprintf(['warning: platform state not valid, in collision!\n Normally this should not happen; ',...
+                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
+                    else
+                        ids = (obj.X(1:12) < obj.stateLimits(:,1)) | (obj.X(1:12) > obj.stateLimits(:,2));
+                        problematics = '';
+                        for k=1:size(ids)
+                            if(ids(k))
+                                problematics = [problematics,',',obj.labels{k}]; %#ok<AGROW>
+                            end
+                        end
+                        fprintf(['warning: platform state not valid, values out of bounds (',problematics,')!\n',num2str(obj.X'),'\nNormally this should not happen; ',...
+                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
+                    end
+                end
+            end
+        end
+    end
+    
+    methods (Access=protected)
+        
+        function obj=resetAdditional(obj)
+           % used by subclasses to reset additional stuff 
+        end
+        
+        function obj=updateAdditional(obj,U)
+           % used by subclasses to update additional stuff 
+        end
+         
+        function obj=updateAdditionalGraphics(obj,X)
+           % used by subclasses to update additional graphics stuff 
+        end
+    end
+end
+

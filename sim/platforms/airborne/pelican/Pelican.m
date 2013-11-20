@@ -1,4 +1,4 @@
-classdef Pelican<Steppable & Platform
+classdef Pelican<PhysicalPlatform
     % Class that implementatios dynamic and sensors of an AscTec Pelican quadrotor
     % The parameters are derived from the system identification of one of
     % the UCL quadrotors
@@ -55,17 +55,10 @@ classdef Pelican<Steppable & Platform
         gpsreceiver; % handle to the gps receiver
         aerodynamicTurbulence;  % handle to the aerodynamic turbulence
         ahars ;      % handle to the attitude heading altitude reference system
-        graphics;    % handle to the quadrotor graphics
         a;           % linear accelerations in body coordinates [ax;ay;az]
-        collisionD;  % distance from any other object that defines a collision
         dynNoise;    % standard deviation of the noise dynamics
-        behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
-        prngIds;     %ids of the prng stream used by this object
         stateLimits; % 13 by 2 vector of allowed values of the state
-        X;           % state [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
         eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
-        valid;       % the state of the platform is invalid
-        graphicsOn;  % true if graphics is on
     end
     
     methods (Access = public)
@@ -89,9 +82,10 @@ classdef Pelican<Steppable & Platform
             %                objparams.state - handle to simulator state
             %
             
-            obj=obj@Steppable(objparams);
-            obj=obj@Platform(objparams);
+            obj=obj@PhysicalPlatform(objparams);
             
+            %behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
+
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
             
@@ -340,63 +334,10 @@ classdef Pelican<Steppable & Platform
 
         end
         
-        function coll = inCollision(obj)
-            % returns 1 if a collision is occourring
-            coll = 0;
-            for i=1:length(obj.simState.platforms),
-                if(obj.simState.platforms{i} ~= obj)
-                    if(norm(obj.simState.platforms{i}.X(1:3)-obj.X(1:3))< obj.collisionD)
-                        coll = 1;
-                    end
-                end
-            end
-        end
-        
-        function obj = printStateNotValidError(obj)
-            % display state error info
-            if(strcmp(obj.behaviourIfStateNotValid,'continue'))
-                
-            else
-                if(strcmp(obj.behaviourIfStateNotValid,'error'))
-                    if(obj.inCollision())
-                        error('platform state not valid, in collision!\n');
-                    else
-                        error('platform state not valid, values out of bounds!\n');
-                    end
-                else
-                    if(obj.inCollision())
-                        fprintf(['warning: platform state not valid, in collision!\n Normally this should not happen; ',...
-                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
-                    else
-                        ids = (obj.X(1:12) < obj.stateLimits(:,1)) | (obj.X(1:12) > obj.stateLimits(:,2));
-                        problematics = '';
-                        for k=1:size(ids)
-                            if(ids(k))
-                                problematics = [problematics,',',obj.labels{k}]; %#ok<AGROW>
-                            end
-                        end
-                        fprintf(['warning: platform state not valid, values out of bounds (',problematics,')!\n',num2str(obj.X'),'\nNormally this should not happen; ',...
-                            'however if you think this is fine and you want to stop this warning use the task parameter behaviourIfStateNotValid\n']);
-                    end
-                end
-            end
-        end
-    end
+   end
     
     methods (Access=protected)
-        
-        function obj=resetAdditional(obj)
-           % used by subclasses to reset additional stuff 
-        end
-        
-        function obj=updateAdditional(obj,U)
-           % used by subclasses to update additional stuff 
-        end
-         
-        function obj=updateAdditionalGraphics(obj,X)
-           % used by subclasses to update additional graphics stuff 
-        end
-        
+                
         function obj = update(obj,U)
             % updates the state of the platform and of its components
             %
