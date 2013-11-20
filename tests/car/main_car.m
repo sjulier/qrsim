@@ -15,7 +15,7 @@ N = 3000;
 wp = state.platforms{1}.getX(1:3)
 
 % Null controller - keeps turning on a circle
-U{1}=[1.5; 3*pi/180];
+U{1}=[25; 1*pi/180];
 
 tstart = tic;
 
