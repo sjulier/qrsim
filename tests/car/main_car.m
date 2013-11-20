@@ -14,8 +14,8 @@ N = 3000;
 
 wp = state.platforms{1}.getX(1:3)
 
-% creat PID controller mainobject
- = WaypointPID(state.DT);
+% Null controller - keeps turning on a circle
+U{1}=[1.5; 3*pi/180];
 
 tstart = tic;
 
@@ -25,8 +25,6 @@ for i=1:N,
     % i.e. no collision or out of area event happened
     if(state.platforms{1}.isValid())
         % compute controls
-        U = pid.computeU(state.platforms{1}.getEX(),wp,0);
-        %U = [0;0.02;0.595;0;12];
         % step simulator
         qrsim.step(U);
     end

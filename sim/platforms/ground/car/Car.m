@@ -1,4 +1,4 @@
-classdef Car<Steppable & Platform
+classdef Car<PhysicalPlatform
     % Class that implementatios dynamic and sensors of a generic car
     %
     % Pelican Properties:
@@ -38,22 +38,15 @@ classdef Car<Steppable & Platform
     %
     properties (Constant)
         WHEEL_BASE = 2; % the wheelbase between the front and rear wheels
+        CONTROL_LIMITS = [-5,25; -1,1]; %limits of the control inputs
         labels = {'px','py','pz','phi','theta','psi','u','v','w','p','q','r','thrust'};
     end
     
     properties (Access = protected)
         gpsreceiver; % handle to the gps receiver
         ahars ;      % handle to the attitude heading altitude reference system
-        graphics;    % handle to the vehicle graphics
-        collisionD;  % distance from any other object that defines a collision
         dynNoise;    % standard deviation of the noise dynamics
-        behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
-        prngIds;     % ids of the prng stream used by this object
-        stateLimits; % FIX FOR WHEEL SPEED AND STEER ANGLE 13 by 2 vector of allowed values of the state
-        X;           % state [px;py;pz;phi;theta;psi]
         eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi]
-        valid;       % the state of the platform is invalid
-        graphicsOn;  % true if graphics is on
     end
     
     methods (Access = public)
@@ -76,8 +69,7 @@ classdef Car<Steppable & Platform
             %                objparams.state - handle to simulator state
             %
             
-            obj=obj@Steppable(objparams);
-            obj=obj@Platform(objparams);
+            obj=obj@PhysicalPlatform(objparams);
             
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
@@ -150,21 +142,6 @@ classdef Car<Steppable & Platform
             end
         end
         
-        function X = getX(obj,varargin)
-            % returns the state (noiseless)
-            % X = [px;py;pz;phi;theta;psi]
-            %
-            % Examples
-            %    allX = obj.getX(); returns the whole state vector
-            %  shortX = obj.getX(1:3); returns only the first three elements of teh state vector
-            %
-            if(isempty(varargin))
-                X = obj.X;
-            else
-                X = obj.X(varargin{1});
-            end
-        end
-        
         function eX = getEX(obj,varargin)
             % returns the estimated state (noisy)
             % eX = [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
@@ -193,11 +170,6 @@ classdef Car<Steppable & Platform
             if(~isempty(varargin))
                 X = X(varargin{1});
             end
-        end
-        
-        function iv = isValid(obj)
-            % true if the state is valid
-            iv = obj.valid;
         end
         
         function obj = setX(obj,X)
@@ -273,18 +245,6 @@ classdef Car<Steppable & Platform
     end
     methods (Access=protected)
         
-        function obj=resetAdditional(obj)
-           % used by subclasses to reset additional stuff 
-        end
-        
-        function obj=updateAdditional(obj,U)
-           % used by subclasses to update additional stuff 
-        end
-         
-        function obj=updateAdditionalGraphics(obj,X)
-           % used by subclasses to update additional graphics stuff 
-        end
-        
         function obj = update(obj,U)
             % updates the state of the platform and of its components
             %
@@ -301,34 +261,24 @@ classdef Car<Steppable & Platform
             %
             
             if(obj.valid)
-                
-                % do scaling of inputs
-                US = obj.scaleControls(U);
-                
-                if (size(U,1)~=5)
-                    error('a 5 element column vector [-2048..2048;-2048..2048;0..4096;-2048..2048;9..12] is expected as input ');
+                U=U{1};
+                if (length(U)~=2)
+                    error('a 2 element column vector [wheel_speed, steer_angle] is expected as input ');
                 end
-                
-                %wind and turbulence this closely mimic the Simulink example "Lightweight Airplane Design"
-                % asbSkyHogg/Environment/WindModels
-                meanWind = obj.simState.environment.wind.getLinear(obj.X);
-                
-                obj.aerodynamicTurbulence.step(obj.X);
-                turbWind = obj.aerodynamicTurbulence.getLinear(obj.X);
-                    
-                accNoise = obj.dynNoise.*[randn(obj.simState.rStreams{obj.prngIds(1)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(2)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(3)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(4)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(5)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(6)},1,1)];
-                
+                                
                 % dynamics
-                [obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
+                %[obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
+                
+                S = U(1) * obj.dt;
+                mu = obj.X(4) + U(2);
+                obj.X(1) = obj.X(1) + S * cos(mu);
+                obj.X(2) = obj.X(2) + S * sin(mu);
+                obj.X(4) = obj.X(4) + S * sin(U(2)) / obj.WHEEL_BASE;
                 
                 if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
                     
                     % AHARS
+                    if (false)
                     obj.ahars.step([obj.X;obj.a]);
                     
                     estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
@@ -341,7 +291,7 @@ classdef Car<Steppable & Platform
                     %return values
                     obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
                         estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-                    
+                    end
                     obj.updateAdditional(U);
                     
                     % graphics      
