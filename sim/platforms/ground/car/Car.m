@@ -270,10 +270,10 @@ classdef Car<PhysicalPlatform
                 %[obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
                 
                 S = U(1) * obj.dt;
-                mu = obj.X(4) + U(2);
+                mu = obj.X(6) + U(2);
                 obj.X(1) = obj.X(1) + S * cos(mu);
                 obj.X(2) = obj.X(2) + S * sin(mu);
-                obj.X(4) = obj.X(4) + S * sin(U(2)) / obj.WHEEL_BASE;
+                obj.X(6) = obj.X(6) + S * sin(U(2)) / obj.WHEEL_BASE;
                 
                 if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
                     
