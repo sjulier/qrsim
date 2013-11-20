@@ -77,11 +77,8 @@ c.aerodynamicturbulence.on = 0;
 % Graphics
 c.graphics.type = 'CarGraphics';
 c.graphics.trajectory = 1; % plot trajectory
-c.graphics.AL = 4;       % arm length m
-c.graphics.AT = 0.1;      % arm width m
-c.graphics.AW = 0.2;      % arm thickness m
-c.graphics.BW = 1.2;      % body width m
-c.graphics.BT = 0.8;      % body thickness m
-c.graphics.R = 0.8;       % rotor radius m 
+c.graphics.BW = 3;      % body width m
+c.graphics.BT = 1.2;      % body thickness m
+c.graphics.R = 1/pi;       % rotor radius m 
 c.graphics.DFT = 0.2;     % distance from truss m
 c.graphics.trjLength = 100000;

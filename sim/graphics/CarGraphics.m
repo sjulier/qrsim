@@ -9,17 +9,13 @@ classdef CarGraphics<PlatformGraphics
     %
     
     properties (Access = private)
-        % arms
-        AL % arm length m
-        AT % arm width m
-        AW % arm thickness m
         
         % body
         BW % body width m
         BT % body thickness m
         
-        % rotors
-        R % rotor radius m
+        % wheels
+        R % wheel radius m
         DFT % distance from truss m
         
         gHandle         % graphic handle
@@ -57,12 +53,6 @@ classdef CarGraphics<PlatformGraphics
             
             obj=obj@PlatformGraphics(objparams);
             
-            assert(isfield(objparams,'AL'),'cargraphics:nopar',...
-                'the platform configuration file need to define the parameter AL');
-            assert(isfield(objparams,'AT'),'cargraphics:nopar',...
-                'the platform configuration file need to define the parameter AT');
-            assert(isfield(objparams,'AW'),'cargraphics:nopar',...
-                'the platform configuration file need to define the parameter AW');
             assert(isfield(objparams,'BW'),'cargraphics:nopar',...
                 'the platform configuration file need to define the parameter BW');
             assert(isfield(objparams,'BT'),'cargraphics:nopar',...
@@ -102,17 +92,12 @@ classdef CarGraphics<PlatformGraphics
                 obj.color = 'b';
             end
             
-            % arms
-            obj.AL = objparams.AL;  % arm length m
-            obj.AT = objparams.AT; % arm width m
-            obj.AW = objparams.AW; % arm thickness m
-            
             % body
             obj.BW = objparams.BW; % body width m
             obj.BT = objparams.BT; % body thickness m
             
-            % rotors
-            obj.R = objparams.R; % rotor radius m
+            % wheels
+            obj.R = objparams.R; % wheel radius m
             obj.DFT = objparams.DFT; % distance from truss m
             
             % trajectory
@@ -141,20 +126,21 @@ classdef CarGraphics<PlatformGraphics
             T = [obj.X(1),obj.X(2),obj.X(3)];
             
             % body translation
-            TTB = repmat(T,size(obj.simState.display3d.uavgraphicobject.b{1},1),1);
-            % rotors translation
-            TTR = repmat(T,size(obj.simState.display3d.uavgraphicobject.rotor{1},1),1);
+            TTB = repmat(T,size(obj.simState.display3d.cargraphicobject.b{1},1),1);
+           
+            % wheel translation
+            TTR = repmat(T,size(obj.simState.display3d.cargraphicobject.wheel{1},1),1);
             
             if(isempty(obj.superimposedRenderingInterval))
                 % update body
-                for i=1:size(obj.simState.display3d.uavgraphicobject.b,2),
-                    b = ((obj.simState.display3d.uavgraphicobject.b{i})*C)+TTB;
+                for i=1:size(obj.simState.display3d.cargraphicobject.b,2),
+                    b = ((obj.simState.display3d.cargraphicobject.b{i})*C)+TTB;
                     set(obj.gHandle.b(i),'Vertices',b);
                 end
                 
-                % update rotors
-                for i=1:size(obj.simState.display3d.uavgraphicobject.rotor,2),
-                    r = ((obj.simState.display3d.uavgraphicobject.rotor{i})*C)+TTR;
+                % update wheels
+                for i=1:size(obj.simState.display3d.cargraphicobject.wheel,2),
+                    r = ((obj.simState.display3d.cargraphicobject.wheel{i})*C)+TTR;
                     set(obj.gHandle.r(i),'XData',r(:,1));
                     set(obj.gHandle.r(i),'YData',r(:,2));
                     set(obj.gHandle.r(i),'ZData',r(:,3));
@@ -162,14 +148,14 @@ classdef CarGraphics<PlatformGraphics
                 
             else
                 if(mod(obj.renderCnt,obj.superimposedRenderingInterval)==0)
-                    for i=1:size(obj.simState.display3d.uavgraphicobject.b,2),
-                        b = ((obj.simState.display3d.uavgraphicobject.b{i})*C)+TTB;
-                        obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.uavgraphicobject.bf);
+                    for i=1:size(obj.simState.display3d.cargraphicobject.b,2),
+                        b = ((obj.simState.display3d.cargraphicobject.b{i})*C)+TTB;
+                        obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.cargraphicobject.bf);
                         set(obj.gHandle.b(i) ,'FaceAlpha',obj.alphaValue,'EdgeAlpha',0);
                     end
                     
-                    for i=1:size(obj.simState.display3d.uavgraphicobject.rotor,2),
-                        r = ((obj.simState.display3d.uavgraphicobject.rotor{i})*C)+TTR;
+                    for i=1:size(obj.simState.display3d.cargraphicobject.rotor,2),
+                        r = ((obj.simState.display3d.cargraphicobject.rotor{i})*C)+TTR;
                         if (i==1)
                             obj.gHandle.r(i)= patch(r(:,1),r(:,2),r(:,3),'r');
                         else
@@ -227,16 +213,16 @@ classdef CarGraphics<PlatformGraphics
             C = dcm(obj.X);
             T = [obj.X(1),obj.X(2),obj.X(3)];
             
-            TTB = repmat(T,size(obj.simState.display3d.uavgraphicobject.b{1},1),1);
-            for i=1:size(obj.simState.display3d.uavgraphicobject.b,2),
-                b = ((obj.simState.display3d.uavgraphicobject.b{i})*C)+TTB;
-                obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.uavgraphicobject.bf);
+            TTB = repmat(T,size(obj.simState.display3d.cargraphicobject.b{1},1),1);
+            for i=1:size(obj.simState.display3d.cargraphicobject.b,2),
+                b = ((obj.simState.display3d.cargraphicobject.b{i})*C)+TTB;
+                obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.cargraphicobject.bf);
                 set(obj.gHandle.b(i) ,'FaceAlpha',obj.alphaValue,'EdgeAlpha',0);
             end
             
-            TTR = repmat(T,size(obj.simState.display3d.uavgraphicobject.rotor{1},1),1);
-            for i=1:size(obj.simState.display3d.uavgraphicobject.rotor,2),
-                r = ((obj.simState.display3d.uavgraphicobject.rotor{i})*C)+TTR;
+            TTR = repmat(T,size(obj.simState.display3d.cargraphicobject.wheel{1},1),1);
+            for i=1:size(obj.simState.display3d.cargraphicobject.wheel,2),
+                r = ((obj.simState.display3d.cargraphicobject.wheel{i})*C)+TTR;
                 if (i==1)
                     obj.gHandle.r(i)= patch(r(:,1),r(:,2),r(:,3),'r');
                 else
@@ -259,42 +245,38 @@ classdef CarGraphics<PlatformGraphics
             %    obj.initGlobalGraphics()
             %
             
-            if(~exist('obj.simState.display3d.heliGexists','var'))
+            if(~exist('obj.simState.display3d.carGexists','var'))
                 %%% body
-                al = obj.AL/2; % half rotor to rotor length
-                at = obj.AT/2; % half arm width
-                aw = obj.AW/2; % half arm thickness
                 bw = obj.BW/2; % half body width
                 bt = obj.BT/2; % half body thickness
                 bd = obj.BW*sqrt(2); % body diagonal
-                almd = (obj.AL - 0.93*bd)/4; % half arm length
+%                cube = [-1, 1, 1;-1, 1,-1;-1,-1,-1;-1,-1, 1; 1, 1, 1; 1, 1,-1; 1,-1,-1;1,-1, 1];
                 cube = [-1, 1, 1;-1, 1,-1;-1,-1,-1;-1,-1, 1; 1, 1, 1; 1, 1,-1; 1,-1,-1;1,-1, 1];
                 
-                % arm 1
-                obj.simState.display3d.uavgraphicobject.b{1} = (cube.*repmat([aw,almd,at],size(cube,1),1))+repmat([0,0.5*bd*0.93+almd,0],size(cube,1),1);
-                obj.simState.display3d.uavgraphicobject.b{2} = (cube.*repmat([aw,almd,at],size(cube,1),1))-repmat([0,0.5*bd*0.93+almd,0],size(cube,1),1);
-                
-                % arm 2
-                obj.simState.display3d.uavgraphicobject.b{3} = (obj.simState.display3d.uavgraphicobject.b{1})*angleToDcm(0,0,pi/2,'XYZ');
-                obj.simState.display3d.uavgraphicobject.b{4} = (obj.simState.display3d.uavgraphicobject.b{2})*angleToDcm(0,0,pi/2,'XYZ');
-                
                 % body
-                obj.simState.display3d.uavgraphicobject.b{5} =  (cube.*repmat([bw,bw,bt],size(cube,1),1))*angleToDcm(0,0,pi/4,'XYZ');
+                obj.simState.display3d.cargraphicobject.b{1} =  (cube.*repmat([bw,bw,bt],size(cube,1),1));
                 
-                obj.simState.display3d.uavgraphicobject.bf = [1 2 3 4; 5 6 7 8; 4 3 7 8; 1 5 6 2; 1 4 8 5; 6 7 3 2];
+                obj.simState.display3d.cargraphicobject.bf = [1 2 3 4; 5 6 7 8; 4 3 7 8; 1 5 6 2; 1 4 8 5; 6 7 3 2];
                 
-                %%% rotors
+                %%% wheels
                 r = 0:pi/8:2*pi;
                 sr = size(r,2);
-                disc = [sin(r).*obj.R;cos(r).*obj.R;-ones(1,sr).*obj.DFT]';
+                disc = [sin(r).*obj.R;-zeros(1,sr);cos(r).*obj.R]';
+                %[xc, yc, zc]=cylinder();
+                %sr = size(xc,2);
+                %wheel=[xc;yc;zc];                
                 
-                obj.simState.display3d.uavgraphicobject.rotor{1} = disc + repmat([al,0,0],sr,1);
-                obj.simState.display3d.uavgraphicobject.rotor{2} = disc + repmat([0,al,0],sr,1);
-                obj.simState.display3d.uavgraphicobject.rotor{3} = disc + repmat([0,-al,0],sr,1);
-                obj.simState.display3d.uavgraphicobject.rotor{4} = disc + repmat([-al,0,0],sr,1);
-                obj.simState.display3d.uavgraphicobject.waypoint = (disc + repmat([-al,0,0],sr,1))*10;
+                %obj.simState.display3d.cargraphicobject.wheel{1}.xc = xc + repmat(bw,sr,2);
+                %obj.simState.display3d.cargraphicobject.wheel{1}.yc = yc + 0 * repmat(bw,sr,2);
+                %obj.simState.display3d.cargraphicobject.wheel{2}.zc = zc + 0 * repmat(bw,sr,2);
+
+                obj.simState.display3d.cargraphicobject.wheel{1} = disc + repmat([bw,bw,0],sr,1);
+                obj.simState.display3d.cargraphicobject.wheel{2} = disc + repmat([-bw,bw,0],sr,1);
+                obj.simState.display3d.cargraphicobject.wheel{3} = disc + repmat([-bw,-bw,0],sr,1);
+                obj.simState.display3d.cargraphicobject.wheel{4} = disc + repmat([bw,-bw,0],sr,1);
+                obj.simState.display3d.cargraphicobject.waypoint = (disc + repmat([-bw,0,0],sr,1))*10;
                 
-                obj.simState.display3d.heliGexists=1;
+                obj.simState.display3d.carGexists=1;
                 
             end
         end
