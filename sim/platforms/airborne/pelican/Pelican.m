@@ -57,7 +57,6 @@ classdef Pelican<PhysicalPlatform
         ahars ;      % handle to the attitude heading altitude reference system
         a;           % linear accelerations in body coordinates [ax;ay;az]
         dynNoise;    % standard deviation of the noise dynamics
-        stateLimits; % 13 by 2 vector of allowed values of the state
         eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
     end
     
@@ -325,15 +324,6 @@ classdef Pelican<PhysicalPlatform
             
             US = U.*obj.SI_2_UAVCTRL;
         end
-        
-        function valid = thisStateIsWithinLimits(obj,X)
-            % returns 0 if the state is out of bounds
-            to = min(size(X,1),size(obj.stateLimits,1));
-            
-            valid = all(X(1:to)>=obj.stateLimits(1:to,1)) && all(X(1:to)<=obj.stateLimits(1:to,2));
-
-        end
-        
    end
     
     methods (Access=protected)

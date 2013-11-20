@@ -10,6 +10,7 @@ classdef PhysicalPlatform<Steppable & Platform
         behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
         prngIds;     %ids of the prng stream used by this object
         X;           % state [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
+        stateLimits; % 13 by 2 vector of allowed values of the state
         valid;       % the state of the platform is invalid
         graphicsOn;  % true if graphics is on
     end
@@ -38,7 +39,12 @@ classdef PhysicalPlatform<Steppable & Platform
             obj=obj@Steppable(objparams);
             obj=obj@Platform(objparams);
         end
-        
+                
+        function iv = isValid(obj)
+            % true if the state is valid
+            iv = obj.valid;
+        end
+
         function X = getX(obj,varargin)
             % returns the state (noiseless)
             % X = [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
@@ -105,6 +111,16 @@ classdef PhysicalPlatform<Steppable & Platform
         end
     end
     
+    
+    methods (Sealed,Access=protected)        
+        function valid = thisStateIsWithinLimits(obj,X)
+            % returns 0 if the state is out of bounds
+            to = min(size(X,1),size(obj.stateLimits,1));
+            
+            valid = all(X(1:to)>=obj.stateLimits(1:to,1)) && all(X(1:to)<=obj.stateLimits(1:to,2));
+        end
+   end
+ 
     methods (Access=protected)
         
         function obj=resetAdditional(obj)
