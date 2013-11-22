@@ -12,10 +12,11 @@ state = qrsim.init('TaskCarDriveInCircle');
 % number of steps we run the simulation for
 N = 3000;
 
-wp = state.platforms{1}.getX(1:3)
+% Set up a random set of waypoints
+wp = [0 200 200 0;0 0 200 200];
 
-% Null controller - keeps turning on a circle
-U{1}=[25; 1*pi/180];
+% Waypoints controller
+controller = CarWaypointController(wp, state.DT);
 
 tstart = tic;
 
@@ -25,6 +26,8 @@ for i=1:N,
     % i.e. no collision or out of area event happened
     if(state.platforms{1}.isValid())
         % compute controls
+        U{1} = controller.computeU(state.platforms{1}.getX());
+        %U = [0;0.02;0.595;0;12];
         % step simulator
         qrsim.step(U);
     end

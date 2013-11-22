@@ -1,4 +1,4 @@
-classdef TaskCarDriveInCircle<Task
+classdef TaskCarDriveThroughWaypoints<Task
     % Task used to test assertions on DT
     %
     methods (Sealed,Access=public)
@@ -62,14 +62,12 @@ classdef TaskCarDriveInCircle<Task
             taskparams.environment.gpsspacesegment.PR_SIGMA = 0.003;   % process standard deviation                        
 
             % Wind
-            % i.e. a steady omogeneous wind with a direction and magnitude
-            % this is common to all helicopters
+            % i.e. a steady homogeneous wind with a direction and magnitude
             taskparams.environment.wind.on = 0;
 
             %%%%% platforms %%%%%
             % Configuration and initial state for each of the platforms
             taskparams.platforms(1).configfile = 'car_config';
-            
         end
         
         function reset(obj) 
