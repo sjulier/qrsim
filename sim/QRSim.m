@@ -274,7 +274,7 @@ classdef QRSim<handle
                 obj.simState.environment.wind = feval('Wind', obj.par.environment.wind);
             end
             
-            % flying area
+            % operating area
             assert(isfield(obj.par,'environment')&&isfield(obj.par.environment,'area')&&isfield(obj.par.environment.area,'type'),'qrsim:noareatype','A task must always define an enviroment.area.type ');
             obj.par.environment.area.graphics.on = obj.par.display3d.on;
             obj.par.environment.area.DT = obj.DT;
