@@ -1,4 +1,4 @@
-classdef Car<PhysicalPlatform
+classdef Car<Platform
     % Class that implementatios dynamic and sensors of a generic car
     %
     % Pelican Properties:
@@ -69,7 +69,7 @@ classdef Car<PhysicalPlatform
             %                objparams.state - handle to simulator state
             %
             
-            obj=obj@PhysicalPlatform(objparams);
+            obj=obj@Platform(objparams);
             
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;

@@ -1,4 +1,4 @@
-classdef Pelican<PhysicalPlatform
+classdef Pelican<Platform
     % Class that implementatios dynamic and sensors of an AscTec Pelican quadrotor
     % The parameters are derived from the system identification of one of
     % the UCL quadrotors
@@ -81,7 +81,7 @@ classdef Pelican<PhysicalPlatform
             %                objparams.state - handle to simulator state
             %
             
-            obj=obj@PhysicalPlatform(objparams);
+            obj=obj@Platform(objparams);
             
             %behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
 
