@@ -10,7 +10,7 @@ classdef CarWaypointController<handle
     end
     
     properties (Constant)
-        minD = 0.9;         % minimum distance from a waypoint before switching to the next one
+        minD = 4;         % minimum distance from a waypoint before switching to the next one
         rateG = pi / 18;    % max steering rate (rad/s)
         maxG = pi / 6;      % max steering angle (rad)
         maxV = 10;           % max speed in m/s
