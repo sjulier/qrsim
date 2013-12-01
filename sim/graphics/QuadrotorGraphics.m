@@ -1,32 +1,11 @@
-classdef QuadrotorGraphics<handle
-    % Class that handles the case in which the 3D visualization is turned off
-    % basically an empty shell mostly useful for type checking.
-    %
-    % QuadrotorGraphics Methods:
-    %   QuadrotorGraphics(params)  - constructs the object
-    %   update()                         - does nothing
-    %
-       
-    properties (Access = protected)
-        simState;
-    end
-    
+classdef QuadrotorGraphics<PlatformGraphics
+    % Abstract class for the 3D visualization of a quadrotor helicopter
+    % This implementation is very basic but has the advantage of not
+    % depending on any additional toolbox
+
     methods (Sealed)
         function obj=QuadrotorGraphics(objparams)
-            % constructs the object
-            obj.simState = objparams.state;
+            obj=obj@PlatformGraphics(objparams);
         end
     end
-    
-    methods
-        function obj = update(obj,~)
-            % does nothing
-        end
-        
-        function obj = reset(obj)
-             % does nothing       
-        end
-    end
-    
 end
-

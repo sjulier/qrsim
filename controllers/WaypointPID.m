@@ -5,7 +5,7 @@ classdef WaypointPID<handle
     %
     % WaypointPID methods:
     %   computeU(obj,X,wp,desPsi)    - computes the control signals given the current state, 
-    %                                  desired destibnation and heading
+    %                                  desired destination and heading
     %   reset()                      - reset controller
     %
     properties (Access=protected)

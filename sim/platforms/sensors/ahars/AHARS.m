@@ -1,6 +1,6 @@
 classdef AHARS<Sensor
     % Abstract class for a generic attitude-heading-altitude reference system.
-    % This is a simple wrapper, it does not include any code, its only purpouse is to
+    % This is a simple wrapper, it does not include any code, its only purpose is to
     % allow for runtime type checking.
     %
     % AHARS Methods:

@@ -1,27 +1,22 @@
-% bare bones example of use of the QRSim() simulator object with one
-% helicopter
+% first test with the car
 
 clear all
 close all
-
-% include simulator
-addpath(['..',filesep,'sim']);
-% include controllers
-addpath(['..',filesep,'controllers']);
 
 % create simulator object
 qrsim = QRSim();
 
 % load task parameters and do housekeeping
-state = qrsim.init('TaskKeepSpot');
+state = qrsim.init('TaskCarDriveInCircle');
 
 % number of steps we run the simulation for
 N = 3000;
 
-wp = state.platforms{1}.getX(1:3);
+% Set up a random set of waypoints
+wp = [0 200 200 0;0 0 200 200];
 
-% creat PID controller mainobject
-pid = WaypointPID(state.DT);
+% Waypoints controller
+controller = CarWaypointController(wp, state.DT);
 
 tstart = tic;
 
@@ -31,14 +26,12 @@ for i=1:N,
     % i.e. no collision or out of area event happened
     if(state.platforms{1}.isValid())
         % compute controls
-        U{1} = pid.computeU(state.platforms{1}.getEX(),wp,0);
+        U{1} = controller.computeU(state.platforms{1}.getX());
         %U = [0;0.02;0.595;0;12];
         % step simulator
         qrsim.step(U);
     end
-    
-    % force render, then wait so to run in real time
-    drawnow;
+    % wait so to run in real time
     wait = max(0,state.task.dt-toc(tloop));
     pause(wait);
 end
