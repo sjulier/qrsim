@@ -41,7 +41,7 @@ for i=1:N,
         end
         
         % compute controls
-        U = pid.computeU(ex,wps(:,wpidx),0);
+        U{1} = pid.computeU(ex,wps(:,wpidx),0);
         % step simulator
         qrsim.step(U);        
     end
