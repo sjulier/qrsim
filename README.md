@@ -19,6 +19,30 @@ The following two videos give a glimpse of some of the QRSim capabilities:
 
 [![QRSim capabilities: large number of UAVs](https://github.com/UCL-CompLACS/qrsim/raw/master/doc/YoutubeVideo2.jpg)](http://www.youtube.com/watch?v=SjOaX4Z0iLk)
 
+## Quick usage guide
+
+To run a simple simulation of a single quadrotor holding a waypoint, follow these instructions:
+
+1. Clone the Git repository: <b>git clone https://github.com/UCL-CompLACS/qrsim.git</b>
+2. Open Matlab and switch to code: <b>cd /some/path/to/qrsim</b> 
+3. Add the 'sim' directory to the Matlab search path: <b>addpath sim</b>
+4. Change to the 'example' directory: <b>cd example</b>
+5. Run an example: <b>main</b>
+
+The simulation may also be controlled from outside Matlab. Currently, this is only supported in an Ubuntu Linux environment, and requires a little more work to set up. 
+
+1. Configure Oracle Java 1.6 as Ubuntu default, because Matlab currently does not support other versions.
+2. Install the required libraries: <b>sudo apt-get install cmake libprotoc-dev libprotobuf7 libprotobuf-lite7 libprotobuf-java</b>
+3. Change to the 'tcp-linux' directory: <b>cd /some/path/to/qrsim/tcp-linux</b> 
+4. Prepare the build environment: <b>cmake</b> 
+5. Build the code: <b>make</b>
+6. Install the buid products: <b>sudo make install</b>
+
+To test the TCP interface, run the following:
+
+1. In matlab: <b>QRSimTCPServer(10000)</b>
+2. In linux: <b>/some/path/to/qrsim/tcp-linux/bin/testClient 127.0.0.1 10000</b>
+
 
 ## Documentation
 The best way to have an understanding of how the QRSim software is structured and of what platforms, sensors and scenarios models are implemented is to read the following documentation:
@@ -41,7 +65,7 @@ With the exception of the libraries in the [`3rdparty`](3rdparty) folder which a
 Due to lack of time we are currently unable to provide direct support for the software, however we will do our best to address any problem reported via the GitHub <a href="https://github.com/UCL-CompLACS/qrsim/issues"> issue system<a/>.  
 
 ## Acknowledgments
-The author wants to thank Guy Lever, Nicolas Hees, Simon Julier, John Showe-Taylor, David Silver, Stephen Hailes and Luke Teacy for the fruitful discussing about the application scenarios and the classifier model. This work was carried out with the support of the European Research Council \#FP7-ICT-270327 (<a href="http://www.complacs.org">CompLACS</a>).
+The author wants to thank Guy Lever, Nicolas Hees, Simon Julier, John Shawe-Taylor, David Silver, Stephen Hailes and Luke Teacy for the fruitful discussing about the application scenarios and the classifier model. This work was carried out with the support of the European Research Council \#FP7-ICT-270327 (<a href="http://www.complacs.org">CompLACS</a>).
 
 
 ### References

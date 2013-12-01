@@ -8,7 +8,7 @@ classdef BoxArea<Area
     %    getLimits()          - returns limits
     %           
     
-    methods (Sealed,Access=public)
+    methods (Access=public)
         function obj = BoxArea(objparams)
             % constructs the object
             %

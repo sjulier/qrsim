@@ -113,6 +113,9 @@ classdef TaskPlumeSingleSourceGaussian<Task
                 taskparams.platforms(i).configfile = 'pelican_config_plume_noiseless'; 
             end
             
+            % get hold of a prng stream
+            obj.prngId = obj.simState.numRStreams+1;
+            obj.simState.numRStreams = obj.simState.numRStreams + 1;
         end
         
         function reset(obj)
@@ -134,12 +137,12 @@ classdef TaskPlumeSingleSourceGaussian<Task
         
         function UU = step(obj,U)
             % compute the UAVs controls from the velocity inputs
-            UU=zeros(5,length(obj.simState.platforms));
+            UU=cell(length(obj.simState.platforms));
             for i=1:length(obj.simState.platforms),
                 if(obj.simState.platforms{i}.isValid())
-                    UU(:,i) = obj.velPIDs{i}.computeU(obj.simState.platforms{i}.getEX(),U(:,i),0);
+                    UU{i} = obj.velPIDs{i}.computeU(obj.simState.platforms{i}.getEX(),U{i},0);
                 else
-                    UU(:,i) = obj.velPIDs{i}.computeU(obj.simState.platforms{i}.getEX(),[0;0;0],0);
+                    UU{i} = obj.velPIDs{i}.computeU(obj.simState.platforms{i}.getEX(),[0;0;0],0);
                 end
             end
         end
