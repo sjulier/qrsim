@@ -1,13 +1,21 @@
-classdef Area<Steppable & EnvironmentObject
-    % Base class for any area in which the platforms can fly
+classdef BoxWithSteppablesArea<Area
+    
+    % Defines a simple box shaped area in which the ground is split in
+    % areas of different classes and there are persons present at randomly
+    % generated locations.
     %
-    % Area Methods:
-    %    Area(objparams)      - constructs the object
-    %    reset()              - does nothing
-    %    getOriginUTMCoords() - returns origin
-    %    getLimits()          - returns limits
-    %    isGraphicsOn()       - returns true if there is a graphics object associate with the area
-    %
+    % BoxWithPersonsArea Methods:
+    %    BoxWithPersonsArea(objparams)  - constructs the object
+    %    reset()                        - does nothing
+    %    getOriginUTMCoords()           - returns origin
+    %    getLimits()                    - returns limits
+    %    getPersonSize()                - returns size of the person patch 
+    %    getPersonsJustFound()          - returns an array of size equal to the number of persons containing 
+    %                                     a one if the person was found in the current timestep
+    %    getPersons()                   - returns the array of persons objects
+    %    getPersonsPosition()           - returns the position of persons
+    %    getTerrainClass(pts)           - returns the terrain class at the specified gound points
+    %    
     properties (Access=protected)
         graphics;         % handle to the graphics object
         originUTMCoords;  % origin
