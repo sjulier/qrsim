@@ -7,7 +7,7 @@ close all
 qrsim = QRSim();
 
 % load task parameters and do housekeeping
-state = qrsim.init('TaskCarDriveInCircle');
+state = qrsim.init('TaskCarDriveThroughWaypoints');
 
 % number of steps we run the simulation for
 N = 3000;
