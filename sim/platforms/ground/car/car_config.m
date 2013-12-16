@@ -38,7 +38,7 @@ c.collisionDistance = 2; % two platforms closer than this distance are deemed in
 c.dynNoise = [0.2;0.2;0.2;0.2;0.2;0.2];
 
 % GPS Receiver
-c.sensors.gpsreceiver.on = 1; % if off the gps returns the noiseless position
+c.sensors.gpsreceiver.on = 0; % if off the gps returns the noiseless position
 c.sensors.gpsreceiver.type = 'GPSReceiverG';
 c.sensors.gpsreceiver.minmaxnumsv=[10,13];        % max and min number of satellites 
 c.sensors.gpsreceiver.R_SIGMA = 0.002;             % receiver noise standard deviation 
