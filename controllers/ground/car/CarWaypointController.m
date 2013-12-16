@@ -13,7 +13,7 @@ classdef CarWaypointController<handle
         minD = 4;         % minimum distance from a waypoint before switching to the next one
         rateG = pi / 18;    % max steering rate (rad/s)
         maxG = pi / 6;      % max steering angle (rad)
-        maxV = 10;           % max speed in m/s
+        maxV = 5;           % max speed in m/s
     end
     
     methods (Access = public)
