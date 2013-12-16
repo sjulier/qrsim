@@ -261,7 +261,6 @@ classdef Car<Platform
             %
             
             if(obj.valid)
-                U=U{1};
                 if (length(U)~=2)
                     error('a 2 element column vector [wheel_speed, steer_angle] is expected as input ');
                 end
