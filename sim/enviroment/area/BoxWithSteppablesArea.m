@@ -1,4 +1,4 @@
-classdef BoxWithSteppablesArea<Area
+classdef BoxWithSteppablesArea<BoxArea
     
     % Defines a simple box shaped area in which the ground is split in
     % areas of different classes and there are persons present at randomly
@@ -9,27 +9,21 @@ classdef BoxWithSteppablesArea<Area
     %    reset()                        - does nothing
     %    getOriginUTMCoords()           - returns origin
     %    getLimits()                    - returns limits
-    %    getPersonSize()                - returns size of the person patch 
-    %    getPersonsJustFound()          - returns an array of size equal to the number of persons containing 
     %                                     a one if the person was found in the current timestep
-    %    getPersons()                   - returns the array of persons objects
-    %    getPersonsPosition()           - returns the position of persons
+    %    getSteppables()                - returns the array of steppables objects
     %    getTerrainClass(pts)           - returns the terrain class at the specified gound points
     %    
     properties (Access=protected)
-        graphics;         % handle to the graphics object
-        originUTMCoords;  % origin
-        limits;           % area limits
-        graphicsOn;       % true if there is a graphics object associate with the area
+        steppables;       % the array of the steppables stored in this object
     end
     
-    methods (Sealed,Access=public)
-        function obj = Area(objparams)
+    methods (Access=public)
+        function obj = BoxWithSteppablesArea(objparams)
             % constructs the object
             %
             % Example:
             %
-            %   obj=Area(objparams)
+            %   obj=BoxWithSteppablesArea(objparams)
             %               objparams.limits - x,y,z limits of the area
             %               objparams.originutmcoords - structure containing the origin in utm coord
             %               objparams.graphics.type - class type for the graphics object
@@ -45,33 +39,17 @@ classdef BoxWithSteppablesArea<Area
             objparams.on = 1;
             
             % call parents constructors
-            obj=obj@Steppable(objparams);
-            obj=obj@EnvironmentObject(objparams);
-            
-            assert(isfield(objparams,'limits'),'area:nolimits','The task must define environment.area.limits');
-            obj.limits = objparams.limits;
-            
-            assert(isfield(objparams,'originutmcoords'),'area:nooriginutmcoords','The task must define environment.area.originutmcoords');
-            obj.originUTMCoords = objparams.originutmcoords;
-            
-            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'area:nographics',['The task must define environment.area.graphics\n',...
-                ' this could be environment.area.graphics.on=0; if no graphics is needed']);
-            if(objparams.graphics.on)
-                obj.graphicsOn = 1;
-                assert(isfield(objparams.graphics,'type'),'area:nographicstype','Since the display3d is on the task must define environment.area.graphics.type');
-            else
-                obj.graphicsOn = 0;
-            end
+            obj=obj@BoxArea(objparams);
         end
         
-        function coords = getOriginUTMCoords(obj)
-            % returns area origin
-            coords = obj.originUTMCoords ;
+        function num_steppables = addSteppable(obj, newSteppable)
+                assert(isfield(newSteppable, 'simState'),'boxwithsteppablesarea:notasteppable','Only steppable objects can be added');
+                obj.steppables = [obj.steppables newSteppable];
+                num_steppables = size(obj.steppables);
         end
         
-        function limits = getLimits(obj)
-            % returns area limits
-            limits = obj.limits;
+        function steppables = getSteppables(obj)
+                steppables = obj.steppables;
         end
         
         function on = isGraphicsOn(obj)
@@ -82,20 +60,20 @@ classdef BoxWithSteppablesArea<Area
     
     methods (Access=public)
         function obj = reset(obj)
-            % reset area parameters
-            % in this case nothing needs to be done
-            obj.bootstrapped = 1; 
+           % Delegate whatever is required in the base class
+           
+           obj = BoxArea.reset(obj);        
+           % clear the set of steppables
+           obj.steppables = [];
         end
     end
     
     methods (Access=protected)        
-        function obj = update(obj, ~)
-            % no updates are carries out.
-            %
-            % Note:
-            %  this method is called automatically by the step() of the Steppable parent
-            %  class and should not be called directly.
-            %
+        function obj = update(obj, args)
+            % Step all the steppables in the environment
+            for k = 1 : length(obj.steppables)
+                obj.steppables(k).update(args);
+            end
         end
     end
 end
