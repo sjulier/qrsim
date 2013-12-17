@@ -36,7 +36,7 @@ classdef CarWaypointController<handle
             % Find the current waypoint and check if it's still valid. If
             % not, identify the next waypoint
             cwp= obj.wp(:,obj.iwp);
-            d2= (cwp(1)-X(1))^2 + (cwp(2)-X(2))^2
+            d2= (cwp(1)-X(1))^2 + (cwp(2)-X(2))^2;
             if d2 < obj.minD^2
                 obj.iwp= obj.iwp+1; % switch to next
                 if obj.iwp > size(obj.wp,2) % reached final waypoint, flag and return
