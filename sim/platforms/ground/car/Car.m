@@ -126,20 +126,6 @@ classdef Car<Platform
             else
                 obj.gpsreceiver = feval('GPSReceiver',objparams.sensors.gpsreceiver);
             end
-            
-            % GRAPHICS
-            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'car:nographics',...
-                'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
-            objparams.graphics.DT = objparams.DT;
-            objparams.graphics.state = objparams.state;
-            if(objparams.graphics.on)
-                obj.graphicsOn = 1;
-                assert(isfield(objparams.graphics,'type'),'car:nographicstype',...
-                    'the platform config file must define a graphics.type');
-                obj.graphics=feval(objparams.graphics.type,objparams.graphics);
-            else
-                obj.graphicsOn = 0;
-            end
         end
         
         function eX = getEX(obj,varargin)

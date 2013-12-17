@@ -161,21 +161,7 @@ classdef Pelican<Platform
                 end
             else
                 obj.gpsreceiver = feval('GPSReceiver',objparams.sensors.gpsreceiver);
-            end
-            
-            % GRAPHICS
-            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'pelican:nographics',...
-                'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
-            objparams.graphics.DT = objparams.DT;
-            objparams.graphics.state = objparams.state;
-            if(objparams.graphics.on)
-                obj.graphicsOn = 1;
-                assert(isfield(objparams.graphics,'type'),'pelican:nographicstype',...
-                    'the platform config file must define a graphics.type');
-                obj.graphics=feval(objparams.graphics.type,objparams.graphics);
-            else
-                obj.graphicsOn = 0;
-            end
+            end            
         end
         
         function X = getX(obj,varargin)

@@ -1,14 +1,12 @@
 classdef Platform<Steppable
-    % Class that implements a physical platform. The base platform
-    % interface is very sparse, and this currently packs out with other
-    % methods.
+    % Class that implements a platform.
     %
     
     properties (Access = protected)
         graphics;    % handle to the graphics
         collisionD;  % distance from any other object that defines a collision
         behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
-        prngIds;     %ids of the prng stream used by this object
+        prngIds;     % ids of the prng stream used by this object
         X;           % state [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
         stateLimits; % 13 by 2 vector of allowed values of the state
         valid;       % the state of the platform is invalid
@@ -23,10 +21,9 @@ classdef Platform<Steppable
             %
             % Example:
             %
-            %   obj=PhysicalPlatform(objparams);
+            %   obj=Platform(objparams);
             %                objparams.dt - timestep of this object
             %                objparams.on - 1 if the object is active
-            %                objparams.aerodynamicturbulence - aerodynamicturbulence parameters
             %                objparams.sensors.ahars - ahrs parameters
             %                objparams.sensors.gpsreceiver - gps receiver parameters
             %                objparams.graphics - graphics parameters
@@ -37,6 +34,20 @@ classdef Platform<Steppable
             %
             
             obj=obj@Steppable(objparams);
+            
+            % GRAPHICS
+            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'platform:nographics',...
+                'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
+            objparams.graphics.DT = objparams.DT;
+            objparams.graphics.state = objparams.state;
+            if(objparams.graphics.on)
+                obj.graphicsOn = 1;
+                assert(isfield(objparams.graphics,'type'),'platform:nographicstype',...
+                    'the platform config file must define a graphics.type');
+                obj.graphics=feval(objparams.graphics.type,objparams.graphics);
+            else
+                obj.graphicsOn = 0;
+            end
         end
                 
         function iv = isValid(obj)
