@@ -1,4 +1,4 @@
-% This script defines all the typical parameters for a car
+% This script defines all the typical parameters for a person
 % 
 % These paramters must be loaded using the function loadConfig and are then
 % passed to the platform constructor, which will take care of propagating the correct 
@@ -6,8 +6,8 @@
 %
 % Example of use:
 %
-%  platform  = loadConfig('car_config');
-%  n = Car(platform);
+%  entity  = loadConfig('person_config');
+%  n = Person(entity);
 % 
 % note: generally the loading is performed automatically by qrsim
 %
@@ -24,7 +24,7 @@ end
 % platforms %
 c.dt = 0.02;
 c.on = 1;
-c.type = 'Car';
+c.type = 'Person';
 
 % max and min limits for each of the state variables, exceeding this limits
 % makes the state invalid (i.e. 19x1 nan)
@@ -37,48 +37,10 @@ c.stateLimits =[params.environment.area.limits(1:2);params.environment.area.limi
 c.collisionDistance = 2; % two platforms closer than this distance are deemed in collision 
 c.dynNoise = [0.2;0.2;0.2;0.2;0.2;0.2];
 
-% GPS Receiver
-c.sensors.gpsreceiver.on = 1; % if off the gps returns the noiseless position
-c.sensors.gpsreceiver.type = 'GPSReceiverG';
-c.sensors.gpsreceiver.minmaxnumsv=[10,13];        % max and min number of satellites 
-c.sensors.gpsreceiver.R_SIGMA = 0.002;             % receiver noise standard deviation 
-c.sensors.gpsreceiver.delay = 1;  % receiver delay in multiples of receiver's dt
-
-% AHARS attitude-heading-altitude reference system (a.k.a. imu + altimeter)
-% dt defined by the minimum dt of the sensors
-c.sensors.ahars.on = 0;  % setting it to 0 is equivalent to disabling all the ones below
-c.sensors.ahars.type = 'AHARSCar';
-
-c.sensors.ahars.accelerometer.on = 0;  % if off the accelerometer returns the noiseless acceleration
-c.sensors.ahars.accelerometer.type = 'AccelerometerG';
-c.sensors.ahars.accelerometer.dt = 0.02;
-c.sensors.ahars.accelerometer.SIGMA = [0.0025;0.0025;0.0025]; % noise standard deviation
-
-c.sensors.ahars.gyroscope.on = 0; % if off the gyroscope returns the noiseless rotational velocity
-c.sensors.ahars.gyroscope.type = 'GyroscopeG';
-c.sensors.ahars.gyroscope.dt = 0.02;
-c.sensors.ahars.gyroscope.SIGMA = [0.0002;0.0002;0.0002]; % noise standard deviation
-
-c.sensors.ahars.orientationEstimator.on = 0; % if off the estimator returns the noiseless orientation
-c.sensors.ahars.orientationEstimator.type = 'OrientationEstimatorGM';
-c.sensors.ahars.orientationEstimator.dt = 0.02;
-c.sensors.ahars.orientationEstimator.BETA = [1/100;1/100;1/100];       % noise time constant
-c.sensors.ahars.orientationEstimator.SIGMA = [0.0005;0.0005;0.0005];   % noise standard deviation
-   
-c.sensors.ahars.altimeter.on = 0; % if off the altimeter returns the noiseless altitude
-c.sensors.ahars.altimeter.type = 'AltimeterGM';
-c.sensors.ahars.altimeter.dt = 0.02;
-c.sensors.ahars.altimeter.TAU = 300;      % noise time constant
-c.sensors.ahars.altimeter.SIGMA = 0.003;       % noise standard deviation
-
-% Aerodynamic Turbulence
-c.aerodynamicturbulence.on = 0;
-
 % Graphics
-c.graphics.type = 'CarGraphics';
+c.graphics.type = 'PersonGraphics';
 c.graphics.trajectory = 1; % plot trajectory
 c.graphics.BW = 3;      % body width m
 c.graphics.BT = 1.2;      % body thickness m
-c.graphics.R = 1/pi;       % rotor radius m 
 c.graphics.DFT = 0.2;     % distance from truss m
 c.graphics.trjLength = 100000;

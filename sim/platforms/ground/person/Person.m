@@ -68,22 +68,10 @@ classdef Person<Entity
             
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
-            
-            assert(isfield(objparams,'stateLimits'),'car:nostatelimits',...
-                'the platform config file must define the stateLimits parameter');
-            obj.stateLimits = objparams.stateLimits;
-            
-            assert(isfield(objparams,'collisionDistance'),'car:nocollisiondistance',...
-                'the platform config file must define the collisionDistance parameter');
-            obj.collisionD = objparams.collisionDistance;
-            
-            assert(isfield(objparams,'dynNoise'),'car:nodynnoise',...
+                        
+            assert(isfield(objparams,'dynNoise'),'person:nodynnoise',...
                 'the platform config file must define the dynNoise parameter');
             obj.dynNoise = objparams.dynNoise;
-            
-            if(isfield(objparams,'behaviourIfStateNotValid'))
-                obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
-            end
             
             %instantiation of sensor objects, with some "manual" type checking            
                         
@@ -174,21 +162,6 @@ classdef Person<Entity
                 
                 if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
                     
-                    % AHARS
-                    if (false)
-                    obj.ahars.step([obj.X;obj.a]);
-                    
-                    estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
-                    
-                    % GPS
-                    obj.gpsreceiver.step(obj.X);
-                    
-                    estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
-                    
-                    %return values
-                    obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
-                        estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-                    end
                     obj.updateAdditional(U);
                     
                     % graphics      

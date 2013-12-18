@@ -82,27 +82,13 @@ classdef Pelican<Platform
             %
             
             obj=obj@Platform(objparams);
-            
-            %behaviourIfStateNotValid = 'warning'; % what to do when the state is not valid
 
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
             
-            assert(isfield(objparams,'stateLimits'),'pelican:nostatelimits',...
-                'the platform config file must define the stateLimits parameter');
-            obj.stateLimits = objparams.stateLimits;
-            
-            assert(isfield(objparams,'collisionDistance'),'pelican:nocollisiondistance',...
-                'the platform config file must define the collisionDistance parameter');
-            obj.collisionD = objparams.collisionDistance;
-            
             assert(isfield(objparams,'dynNoise'),'pelican:nodynnoise',...
                 'the platform config file must define the dynNoise parameter');
             obj.dynNoise = objparams.dynNoise;
-            
-            if(isfield(objparams,'behaviourIfStateNotValid'))
-                obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
-            end
             
             %instantiation of sensor and wind objects, with some "manual" type checking
             

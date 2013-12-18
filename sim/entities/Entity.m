@@ -36,6 +36,19 @@ classdef Entity<Steppable
             
             obj=obj@Steppable(objparams);
             
+            assert(isfield(objparams,'stateLimits'),'entity:nostatelimits',...
+                'the platform config file must define the stateLimits parameter');
+            obj.stateLimits = objparams.stateLimits;
+            
+            assert(isfield(objparams,'collisionDistance'),'entity:nocollisiondistance',...
+                'the platform config file must define the collisionDistance parameter');
+            obj.collisionD = objparams.collisionDistance;
+                        
+            if(isfield(objparams,'behaviourIfStateNotValid'))
+                obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
+            end
+
+            
             % GRAPHICS
             assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'entity:nographics',...
                 'the platform config file must define a graphics parameter if not needed set graphics.on = 0');

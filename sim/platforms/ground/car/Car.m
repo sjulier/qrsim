@@ -74,21 +74,9 @@ classdef Car<Platform
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
             
-            assert(isfield(objparams,'stateLimits'),'car:nostatelimits',...
-                'the platform config file must define the stateLimits parameter');
-            obj.stateLimits = objparams.stateLimits;
-            
-            assert(isfield(objparams,'collisionDistance'),'car:nocollisiondistance',...
-                'the platform config file must define the collisionDistance parameter');
-            obj.collisionD = objparams.collisionDistance;
-            
             assert(isfield(objparams,'dynNoise'),'car:nodynnoise',...
                 'the platform config file must define the dynNoise parameter');
             obj.dynNoise = objparams.dynNoise;
-            
-            if(isfield(objparams,'behaviourIfStateNotValid'))
-                obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
-            end
             
             %instantiation of sensor objects, with some "manual" type checking            
             
