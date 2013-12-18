@@ -12,7 +12,7 @@ classdef QRSim<handle
     %   reset()             - resets the simulator to the state specified in the task
     %   delete()            - destructor
     %   step(obj,U)         - increments time and steps forward in sequence all the enviroment
-    %                         objects and platforms.
+    %                         objects and entities.
     %   resetSeed(varargin) - re-initialize the random number generator seed
     %
     
@@ -118,12 +118,12 @@ classdef QRSim<handle
             end
             
             % reset task
-            % note that this will also reset all the platforms states to their initial value
+            % note that this will also reset all the entities states to their initial value
             obj.simState.task.reset();
             
-            % reset all platforms
-            %for i=1:length(obj.simState.platforms)
-            %    obj.simState.platforms{i}.reset();
+            % reset all entities
+            %for i=1:length(obj.simState.entities)
+            %    obj.simState.entities{i}.reset();
             %end
             
             % reset reward
@@ -162,11 +162,11 @@ classdef QRSim<handle
         end
         
         function obj=step(obj,U)
-            %increments time and steps forward in sequence all the enviroment object and platforms.
+            %increments time and steps forward in sequence all the enviroment object and entities.
             %
             % Example:
             %  obj.step(U);
-            %     U - 5 by m matrix of control inputs for each of the m platforms
+            %     U - 5 by m matrix of control inputs for each of the m entities
             %
             
             assert((obj.bootstrapped==1),'qrsim:ntbootsrapped','after resetting the simulation seed, qrsim.reset() must be called to reinitilize all the simulation objects');
@@ -189,9 +189,9 @@ classdef QRSim<handle
                     UU = U;
                 end
                 
-                % step all the platforms given UU
+                % step all the entities given UU
                 assert(size(obj.simState.platforms,2)==size(UU,2),'qrsim:wronginputsize',...
-                    'the number of colum of the control input matrix has to be equal to the number of platforms');
+                    'the number of colum of the control input matrix has to be equal to the number of entities');
                 
                 for i=1:length(obj.simState.platforms)
                     obj.simState.platforms{i}.step(UU{i});
@@ -232,7 +232,7 @@ classdef QRSim<handle
     methods (Sealed,Access=private)
         
         function obj=createObjects(obj)
-            % create environment and platform objects from the saved parameters
+            % create environment and entity objects from the saved parameters
             
             %%%% NOTE:
             %%%% the order in which the objects are created (i.e. added to
@@ -282,25 +282,40 @@ classdef QRSim<handle
             obj.simState.environment.area = feval(obj.par.environment.area.type, obj.par.environment.area);
             
             
-            %%% instantiates the platform objects
-            assert(isfield(obj.par,'platforms')&&(~isempty(obj.par.platforms)),'qrsim:noplatforms','the task must define at least one platform');
+            %%% instantiates the platforms objects
+            assert(isfield(obj.par,'platforms')&&(~isempty(obj.par.platforms)),'qrsim:platforms','the task must define at least one platform');
             for i=1:length(obj.par.platforms)
                 assert(isfield(obj.par.platforms(i),'configfile'),'qrsim:noplatforms','the task must define a configfile for each platform');
                 p = loadPlatformConfig(obj.par.platforms(i).configfile, obj.par);
                 p.DT = obj.DT;
                 
-                assert(~isfield(obj.par.platforms(i),'X'),'qrsim:platformsx',['platforms(i).X is not used any longher to define the initial platform state,',...
+                assert(~isfield(obj.par.platforms(i),'X'),'qrsim:platformsx',['platforms(i).X is not used any longer to define the initial entity state,',...
                     'for that purpouse call platforms{i}.setX within the reset() method of your task']);
                 
                 p.graphics.on = obj.par.display3d.on;
                 p.state = obj.simState;
                 assert(isfield(p,'aerodynamicturbulence')&&isfield(p.aerodynamicturbulence,'on'),'qrsim:noaerodynamicturbulence',...
-                    'the platform config file must define an aerodynamicturbulence if not needed set aerodynamicturbulence.on = 0');
+                    'the entity config file must define an aerodynamicturbulence if not needed set aerodynamicturbulence.on = 0');
                 
-                assert(isfield(p,'type'),'qrsim:noplatformtype','the platform config file must define a platform type');
+                assert(isfield(p,'type'),'qrsim:noplatformtype','the entity config file must define a platform type');
                 obj.simState.platforms{i}=feval(p.type,p);
             end
-            
+            %%% instantiates the entity objects; these are optional
+            if (isfield(obj.par,'entities'))
+                for i=1:length(obj.par.entities)
+                    assert(isfield(obj.par.entities(i),'configfile'),'qrsim:noentities','the task must define a configfile for each entity');
+                    p = loadPlatformConfig(obj.par.platforms(i).configfile, obj.par);
+                    p.DT = obj.DT;
+
+                    assert(~isfield(obj.par.platforms(i),'X'),'qrsim:entitiesx',['entities(i).X is not used any longer to define the initial entity state,',...
+                        'for that purpouse call entities{i}.setX within the reset() method of your task']);
+
+                    p.graphics.on = obj.par.display3d.on;
+                    p.state = obj.simState;
+                    assert(isfield(p,'type'),'qrsim:noentitytype','the entity config file must define a entity type');
+                    obj.simState.entities{i}=feval(p.type,p);
+                end
+            end
         end
     end
     

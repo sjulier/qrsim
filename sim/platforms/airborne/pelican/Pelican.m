@@ -271,21 +271,6 @@ classdef Pelican<Platform
             
             obj.bootstrapped = 1;
         end
-        
-        function obj = reset(obj)
-            % resets all the platform subcomponents
-            %
-            % Example:
-            %   obj.reset();
-            %
-            assert(false,'pelican:rset',['A platform ca not be simply reset since that would its state undefined',...
-                ' use setX instead, that will take care of resetting what necessary']);
-        end
-        
-        function d = getCollisionDistance(obj)
-            % returns collision distance
-            d = obj.collisionD;
-        end
     end
     
     methods (Sealed,Access=protected)

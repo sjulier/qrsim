@@ -169,19 +169,7 @@ classdef Car<Platform
             %           if the length of the X vector is 6, all the velocities are set to zero
             %
             
-            assert((size(X,1)==4)||(size(X,1)==6),'car:wrongsetstate',...
-                'setState() on a pelican object requires an input of length 4 or 6 instead we have %d',size(X,1));
-            
-            %assert(obj.thisStateIsWithinLimits(X),'car:settingoobstate',...
-            %    'the state passed through setState() is not valid (i.e. out of limits)');
-            
-            if(size(X,4)==6)
-                X = [X;zeros(2,1)];
-            end
-            
-            X = [X; zeros(6,1)];
-            
-            obj.X = X;
+            obj = setX@Entity(obj,X);
             
             % set things
             if (false)
@@ -213,22 +201,8 @@ classdef Car<Platform
             
             obj.bootstrapped = 1;
         end
-        
-        function obj = reset(obj)
-            % resets all the platform subcomponents
-            %
-            % Example:
-            %   obj.reset();
-            %
-            assert(false,'car:rset',['A platform ca not be simply reset since that would its state undefined',...
-                ' use setX instead, that will take care of resetting what necessary']);
-        end
-        
-        function d = getCollisionDistance(obj)
-            % returns collision distance
-            d = obj.collisionD;
-        end
     end
+    
     methods (Access=protected)
         
         function obj = update(obj,U)
