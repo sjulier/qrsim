@@ -214,13 +214,18 @@ classdef Car<Platform
                 end
                                 
                 % dynamics
-                %[obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
                 
                 S = U(1) * obj.dt;
                 mu = obj.X(6) + U(2);
                 obj.X(1) = obj.X(1) + S * cos(mu);
                 obj.X(2) = obj.X(2) + S * sin(mu);
                 obj.X(6) = obj.X(6) + S * sin(U(2)) / obj.WHEEL_BASE;
+                
+                % Assumes coordinate system is over front wheel
+                obj.X(7) = U(1) * cos(U(2));
+                obj.X(8) = U(1) * sin(U(2));
+                
+                obj.X(12) = U(1) * sin(U(2)) / obj.WHEEL_BASE;
                 
                 if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
                     
