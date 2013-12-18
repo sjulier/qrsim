@@ -92,23 +92,21 @@ classdef Entity<Steppable
             % Example:
             %
             %   obj.setState(X)
-            %       X - platform new state vector [px,py,pz,phi,theta,psi,u,v,w,p,q,r,thrust]
-            %           if the length of the X vector is 12, thrust is initialized automatically
+            %       X - platform new state vector [px,py,pz,phi,theta,psi,u,v,w,p,q,r]
             %           if the length of the X vector is 6, all the velocities are set to zero
             %
             
-            assert((size(X,1)==4)||(size(X,1)==6),'entity:wrongsetstate',...
+            assert((size(X,1)==4)||(size(X,1)==6)||(size(X,1)==12),'entity:wrongsetstate',...
                 'setState() on an entity requires an input of length 4 or 6 instead we have %d',size(X,1));
             
             assert(obj.thisStateIsWithinLimits(X),'entity:settingoobstate',...
                 'the state passed through setState() is not valid (i.e. out of limits)');
             
-            if(size(X,4)==6)
+            if(size(X,1)==4)
                 X = [X;zeros(2,1)];
+            elseif (size(X,1)==6)
+                X = [X; zeros(6,1)];
             end
-            
-            X = [X; zeros(6,1)];
-            
             obj.X = X;
         end
         
