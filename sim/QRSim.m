@@ -196,6 +196,11 @@ classdef QRSim<handle
                 for i=1:length(obj.simState.platforms)
                     obj.simState.platforms{i}.step(UU{i});
                 end
+                
+                for i=1:length(obj.simState.entities)
+                    obj.simState.entities{i}.step([]);
+                end
+
             end
             
             % update the task reward
@@ -281,33 +286,36 @@ classdef QRSim<handle
             obj.par.environment.area.state = obj.simState;
             obj.simState.environment.area = feval(obj.par.environment.area.type, obj.par.environment.area);
             
+            totalentities = 0;
             
             %%% instantiates the platforms objects
-            assert(isfield(obj.par,'platforms')&&(~isempty(obj.par.platforms)),'qrsim:platforms','the task must define at least one platform');
-            for i=1:length(obj.par.platforms)
-                assert(isfield(obj.par.platforms(i),'configfile'),'qrsim:noplatforms','the task must define a configfile for each platform');
-                p = loadPlatformConfig(obj.par.platforms(i).configfile, obj.par);
-                p.DT = obj.DT;
-                
-                assert(~isfield(obj.par.platforms(i),'X'),'qrsim:platformsx',['platforms(i).X is not used any longer to define the initial entity state,',...
-                    'for that purpouse call platforms{i}.setX within the reset() method of your task']);
-                
-                p.graphics.on = obj.par.display3d.on;
-                p.state = obj.simState;
-                assert(isfield(p,'aerodynamicturbulence')&&isfield(p.aerodynamicturbulence,'on'),'qrsim:noaerodynamicturbulence',...
-                    'the entity config file must define an aerodynamicturbulence if not needed set aerodynamicturbulence.on = 0');
-                
-                assert(isfield(p,'type'),'qrsim:noplatformtype','the entity config file must define a platform type');
-                obj.simState.platforms{i}=feval(p.type,p);
+            if (isfield(obj.par,'platforms'))
+                for i=1:length(obj.par.platforms)
+                    assert(isfield(obj.par.platforms(i),'configfile'),'qrsim:noplatforms','the task must define a configfile for each platform');
+                    p = loadPlatformConfig(obj.par.platforms(i).configfile, obj.par);
+                    p.DT = obj.DT;
+
+                    assert(~isfield(obj.par.platforms(i),'X'),'qrsim:platformsx',['platforms(i).X is not used any longer to define the initial entity state,',...
+                        'for that purpouse call platforms{i}.setX within the reset() method of your task']);
+
+                    p.graphics.on = obj.par.display3d.on;
+                    p.state = obj.simState;
+                    assert(isfield(p,'aerodynamicturbulence')&&isfield(p.aerodynamicturbulence,'on'),'qrsim:noaerodynamicturbulence',...
+                        'the entity config file must define an aerodynamicturbulence if not needed set aerodynamicturbulence.on = 0');
+
+                    assert(isfield(p,'type'),'qrsim:noplatformtype','the entity config file must define a platform type');
+                    obj.simState.platforms{i}=feval(p.type,p);
+                end
+                totalentities = totalentities + length(obj.par.platforms);
             end
             %%% instantiates the entity objects; these are optional
             if (isfield(obj.par,'entities'))
                 for i=1:length(obj.par.entities)
                     assert(isfield(obj.par.entities(i),'configfile'),'qrsim:noentities','the task must define a configfile for each entity');
-                    p = loadPlatformConfig(obj.par.platforms(i).configfile, obj.par);
+                    p = loadPlatformConfig(obj.par.entities(i).configfile, obj.par);
                     p.DT = obj.DT;
 
-                    assert(~isfield(obj.par.platforms(i),'X'),'qrsim:entitiesx',['entities(i).X is not used any longer to define the initial entity state,',...
+                    assert(~isfield(obj.par.entities(i),'X'),'qrsim:entitiesx',['entities(i).X is not used any longer to define the initial entity state,',...
                         'for that purpouse call entities{i}.setX within the reset() method of your task']);
 
                     p.graphics.on = obj.par.display3d.on;
@@ -315,7 +323,9 @@ classdef QRSim<handle
                     assert(isfield(p,'type'),'qrsim:noentitytype','the entity config file must define a entity type');
                     obj.simState.entities{i}=feval(p.type,p);
                 end
+                totalentities = totalentities + length(obj.par.entities);
             end
+           assert(totalentities>0,'qrsim:platforms','the task must define at least one platform or entity');
         end
     end
     
