@@ -69,25 +69,11 @@ classdef Person<Entity
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
                         
-            assert(isfield(objparams,'dynNoise'),'person:nodynnoise',...
-                'the platform config file must define the dynNoise parameter');
-            obj.dynNoise = objparams.dynNoise;
+            psize = obj.psize;
             
-            %instantiation of sensor objects, with some "manual" type checking            
-                        
-            % GRAPHICS
-            assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'person:nographics',...
-                'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
-            objparams.graphics.DT = objparams.DT;
-            objparams.graphics.state = objparams.state;
-            if(objparams.graphics.on)
-                obj.graphicsOn = 1;
-                assert(isfield(objparams.graphics,'type'),'person:nographicstype',...
-                    'the platform config file must define a graphics.type');
-                obj.graphics=feval(objparams.graphics.type,objparams.graphics);
-            else
-                obj.graphicsOn = 0;
-            end
+            %obj.bb = repmat(center,1,4)+0.5*[ psize psize -psize -psize;
+            %    -psize psize -psize  psize;
+            %    0     0      0      0];                        
         end
         
         function eX = getEX(obj,varargin)
@@ -146,19 +132,15 @@ classdef Person<Entity
             %
             
             if(obj.valid)
-                U=U{1};
-                if (length(U)~=2)
-                    error('a 2 element column vector [wheel_speed, steer_angle] is expected as input ');
-                end
-                                
-                % dynamics
+                % dynamics; chug in a straight line at constant speed!
+                
                 %[obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
                 
-                S = U(1) * obj.dt;
-                mu = obj.X(6) + U(2);
-                obj.X(1) = obj.X(1) + S * cos(mu);
-                obj.X(2) = obj.X(2) + S * sin(mu);
-                obj.X(6) = obj.X(6) + S * sin(U(2)) / obj.WHEEL_BASE;
+%                obj.bb = obj.bb - repmat(obj.X(1:3),1,4);
+                
+                obj.X(1:3) = obj.X(1:3) + obj.dt * obj.X(7:9);
+                
+%                obj.bb = repmat(obj.X(1:3),1,4)+obj.bb;
                 
                 if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
                     
@@ -172,7 +154,6 @@ classdef Person<Entity
                     
                     obj.valid = 1;
                 else
-                    obj.eX = nan(20,1);
                     obj.valid=0;
                     
                     obj.printStateNotValidError();
