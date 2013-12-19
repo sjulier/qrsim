@@ -65,6 +65,10 @@ classdef CarWaypointController<handle
                 obj.G= sign(obj.G)*obj.maxG;
             end
             
+            % make speed linearly dependent on the steer angle - go
+            % slower with a larger angle (crude!)
+            obj.V = obj.maxV * min(1, d2 / (16*obj.minD^2));
+            
             U=[obj.V;obj.G];
         end
         
