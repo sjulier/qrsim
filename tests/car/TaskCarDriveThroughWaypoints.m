@@ -3,7 +3,7 @@ classdef TaskCarDriveThroughWaypoints<Task
     %
     methods (Sealed,Access=public)
                         
-        function obj = TaskCarDriveInCircle(state)
+        function obj = TaskCarDriveThroughWaypoints(state)
             obj = obj@Task(state);
         end
 
