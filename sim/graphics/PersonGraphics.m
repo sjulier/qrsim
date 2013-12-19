@@ -11,8 +11,8 @@ classdef PersonGraphics<PlatformGraphics
     properties (Access = private)
         
         % body
-        BW % body width m
         BT % body thickness m
+        BH % body height m
                 
         gHandle         % graphic handle
         plotTrj         % 1 to enable trajectory plotting
@@ -44,10 +44,10 @@ classdef PersonGraphics<PlatformGraphics
             
             obj=obj@PlatformGraphics(objparams);
             
-            assert(isfield(objparams,'BW'),'persongraphics:nopar',...
-                'the platform configuration file need to define the parameter BW');
-            assert(isfield(objparams,'BH'),'persongraphics:nopar',...
+            assert(isfield(objparams,'BT'),'persongraphics:nopar',...
                 'the platform configuration file need to define the parameter BT');
+            assert(isfield(objparams,'BH'),'persongraphics:nopar',...
+                'the platform configuration file need to define the parameter BH');
             assert(isfield(objparams,'trajectory'),'persongraphics:nopar',...
                 'the platform configuration file need to define the parameter trajectory');
             
@@ -80,7 +80,7 @@ classdef PersonGraphics<PlatformGraphics
             end
             
             % body
-            obj.BW = objparams.BW; % body width m
+            obj.BT = objparams.BT; % body thickness m
             obj.BH = objparams.BH; % body height m
                         
             % trajectory
@@ -106,7 +106,7 @@ classdef PersonGraphics<PlatformGraphics
             
             % rotations and translation
             C = dcm(obj.X);
-            T = [obj.X(1),obj.X(2),obj.X(3)];
+            T = [obj.X(1),obj.X(2),obj.X(3)-obj.BH/2];
             
             % body translation
             TTB = repmat(T,size(obj.simState.display3d.persongraphicobject.b{1},1),1);
@@ -174,22 +174,11 @@ classdef PersonGraphics<PlatformGraphics
             C = dcm(obj.X);
             T = [obj.X(1),obj.X(2),obj.X(3)];
             
-            TTB = repmat(T,size(obj.simState.display3d.cargraphicobject.b{1},1),1);
-            for i=1:size(obj.simState.display3d.cargraphicobject.b,2),
-                b = ((obj.simState.display3d.cargraphicobject.b{i})*C)+TTB;
-                obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.cargraphicobject.bf);
+            TTB = repmat(T,size(obj.simState.display3d.persongraphicobject.b{1},1),1);
+            for i=1:size(obj.simState.display3d.persongraphicobject.b,2),
+                b = ((obj.simState.display3d.persongraphicobject.b{i})*C)+TTB;
+                obj.gHandle.b(i) = patch('Vertices',b,'Faces',obj.simState.display3d.persongraphicobject.bf);
                 set(obj.gHandle.b(i) ,'FaceAlpha',obj.alphaValue,'EdgeAlpha',0);
-            end
-            
-            TTR = repmat(T,size(obj.simState.display3d.cargraphicobject.wheel{1},1),1);
-            for i=1:size(obj.simState.display3d.cargraphicobject.wheel,2),
-                r = ((obj.simState.display3d.cargraphicobject.wheel{i})*C)+TTR;
-                if (i==1)
-                    obj.gHandle.r(i)= patch(r(:,1),r(:,2),r(:,3),'r');
-                else
-                    obj.gHandle.r(i) = patch(r(:,1),r(:,2),r(:,3),obj.color);
-                end
-                set(obj.gHandle.r(i) ,'FaceAlpha',obj.alphaValue,'EdgeAlpha',0);
             end
             
             obj.gHandle.trjData.x = [];
@@ -208,16 +197,14 @@ classdef PersonGraphics<PlatformGraphics
             
             if(~exist('obj.simState.display3d.personGexists','var'))
                 %%% body
-                bw = obj.BW/2; % half body width
-                bh = obj.BH/2; % half body thickness
+                bt = obj.BT/2; % half body thickness
+                bh = obj.BH/2; % half body height
                 cube = [-1, 1, 1;-1, 1,-1;-1,-1,-1;-1,-1, 1; 1, 1, 1; 1, 1,-1; 1,-1,-1;1,-1, 1];
                 
                 % body
-                obj.simState.display3d.persongraphicobject.b{1} =  (cube.*repmat([bw,bw,bt],size(cube,1),1));
+                obj.simState.display3d.persongraphicobject.b{1} =  (cube.*repmat([bt,bt,bh],size(cube,1),1));
                 
                 obj.simState.display3d.persongraphicobject.bf = [1 2 3 4; 5 6 7 8; 4 3 7 8; 1 5 6 2; 1 4 8 5; 6 7 3 2];
-                
-                obj.simState.display3d.persongraphicobject.waypoint = (disc + repmat([-bw,0,0],sr,1))*10;
                 
                 obj.simState.display3d.personGexists=1;
                 

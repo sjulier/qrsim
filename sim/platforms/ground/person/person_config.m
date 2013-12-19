@@ -33,14 +33,13 @@ c.stateLimits =[params.environment.area.limits(1:2);params.environment.area.limi
     -pi,pi;-pi,pi;-10*pi,10*pi;... % attitude limits
     -15,15;-15,15;-15,15;... % linear velocity limits
     -3,3;-3,3;-3,3]; %rotational velocity limits
-    
+
 c.collisionDistance = 2; % two platforms closer than this distance are deemed in collision 
 c.dynNoise = [0.2;0.2;0.2;0.2;0.2;0.2];
 
 % Graphics
 c.graphics.type = 'PersonGraphics';
 c.graphics.trajectory = 1; % plot trajectory
-c.graphics.BW = 3;      % body width m
-c.graphics.BT = 1.2;      % body thickness m
-c.graphics.DFT = 0.2;     % distance from truss m
+c.graphics.BT = 1;      % body thickness m
+c.graphics.BH = 2;      % body height m
 c.graphics.trjLength = 100000;
