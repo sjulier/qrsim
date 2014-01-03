@@ -53,9 +53,6 @@ classdef Pelican<Platform
     
     properties (Access = protected)
         aerodynamicTurbulence;  % handle to the aerodynamic turbulence
-        a;           % linear accelerations in body coordinates [ax;ay;az]
-        dynNoise;    % standard deviation of the noise dynamics
-        eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
     end
     
     methods (Access = public)
@@ -257,79 +254,39 @@ classdef Pelican<Platform
     
     methods (Access=protected)
                 
-        function obj = update(obj,U)
+           function obj = handleStateNotValid(obj)
+               obj.eX = nan(20,1);
+
+           end
+      
+        function obj = updateEntityState(obj,US)
             % updates the state of the platform and of its components
             %
             % In turns this:
             %  updates turbulence model
             %  updates the state of the platform applying controls
-            %  updates local part of gps model
-            %  updates ahars noise model
-            %  updates the graphics
-            %
-            % Note:
-            %  this method is called automatically by the step() of the Steppable parent
-            %  class and should not be called directly.
-            %
             
-            if(obj.valid)
-                
-                % do scaling of inputs
-                US = obj.scaleControls(U);
-                
-                if (size(U,1)~=5)
-                    error('a 5 element column vector [-2048..2048;-2048..2048;0..4096;-2048..2048;9..12] is expected as input ');
-                end
-                
-                %wind and turbulence this closely mimic the Simulink example "Lightweight Airplane Design"
-                % asbSkyHogg/Environment/WindModels
-                meanWind = obj.simState.environment.wind.getLinear(obj.X);
-                
-                obj.aerodynamicTurbulence.step(obj.X);
-                turbWind = obj.aerodynamicTurbulence.getLinear(obj.X);
-                    
-                accNoise = obj.dynNoise.*[randn(obj.simState.rStreams{obj.prngIds(1)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(2)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(3)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(4)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(5)},1,1);
-                                          randn(obj.simState.rStreams{obj.prngIds(6)},1,1)];
-                
-                % dynamics
-                [obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
-                
-                if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
-                    
-                    % AHARS
-                    obj.ahars.step([obj.X;obj.a]);
-                    
-                    estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
-                    
-                    % GPS
-                    obj.gpsreceiver.step(obj.X);
-                    
-                    estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
-                    
-                    %return values
-                    obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
-                        estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-                    
-                    obj.updateAdditional(U);
-                    
-                    % graphics      
-                    if(obj.graphicsOn)
-                        obj.graphics.update(obj.X);
-                        obj.updateAdditionalGraphics(obj.X);
-                    end
-                    
-                    obj.valid = 1;
-                else
-                    obj.eX = nan(20,1);
-                    obj.valid=0;
-                    
-                    obj.printStateNotValidError();
-                end                
+            %wind and turbulence this closely mimic the Simulink example "Lightweight Airplane Design"
+            % asbSkyHogg/Environment/WindModels
+            
+            if (size(US,1)~=5)
+                error('a 5 element column vector [-2048..2048;-2048..2048;0..4096;-2048..2048;9..12] is expected as input ');
             end
+            
+            meanWind = obj.simState.environment.wind.getLinear(obj.X);
+
+            obj.aerodynamicTurbulence.step(obj.X);
+            turbWind = obj.aerodynamicTurbulence.getLinear(obj.X);
+
+            accNoise = obj.dynNoise.*[randn(obj.simState.rStreams{obj.prngIds(1)},1,1);
+                                      randn(obj.simState.rStreams{obj.prngIds(2)},1,1);
+                                      randn(obj.simState.rStreams{obj.prngIds(3)},1,1);
+                                      randn(obj.simState.rStreams{obj.prngIds(4)},1,1);
+                                      randn(obj.simState.rStreams{obj.prngIds(5)},1,1);
+                                      randn(obj.simState.rStreams{obj.prngIds(6)},1,1)];
+
+            % dynamics
+            [obj.X, obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
         end        
     end
 end

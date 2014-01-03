@@ -38,13 +38,8 @@ classdef Car<Platform
     %
     properties (Constant)
         WHEEL_BASE = 2; % the wheelbase between the front and rear wheels
-        CONTROL_LIMITS = [-5,25; -1,1]; %limits of the control inputs
+        CONTROL_LIMITS = 10 * [-5,25; -1,1]; %limits of the control inputs
         labels = {'px','py','pz','phi','theta','psi','u','v','w','p','q','r','thrust'};
-    end
-    
-    properties (Access = protected)
-        dynNoise;    % standard deviation of the noise dynamics
-        eX;          % estimated state  [~px;~py;~pz;~phi;~theta;~psi]
     end
     
     methods (Access = public)
@@ -120,27 +115,6 @@ classdef Car<Platform
             
             obj = setX@Entity(obj,X);
             
-            % set things
-            if (false)
-            obj.gpsreceiver.setState(X);
-            obj.ahars.setState(X);  
-            
-            %obj.a  = zeros(3,1);
-            
-            
-            % now rest to make sure components are initialised correctly
-            obj.gpsreceiver.reset();
-            obj.ahars.reset();
-            obj.resetAdditional();            
-            
-            % get measurements
-            estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
-            estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
-            
-            obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
-                estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-            
-            end
             obj.valid = 1;
             
             % clean the trajectory plot if any
@@ -154,73 +128,33 @@ classdef Car<Platform
     
     methods (Access=protected)
         
-        function obj = update(obj,U)
+        function obj = updateEntityState(obj,US)
             % updates the state of the platform and of its components
             %
             % In turns this:
-            %  updates turbulence model
             %  updates the state of the platform applying controls
-            %  updates local part of gps model
-            %  updates ahars noise model
-            %  updates the graphics
-            %
             % Note:
             %  this method is called automatically by the step() of the Steppable parent
             %  class and should not be called directly.
             %
             
-            if(obj.valid)
-                if (length(U)~=2)
-                    error('a 2 element column vector [wheel_speed, steer_angle] is expected as input ');
-                end
-                                
-                % dynamics
-                
-                S = U(1) * obj.dt;
-                mu = obj.X(6) + U(2);
-                obj.X(1) = obj.X(1) + S * cos(mu);
-                obj.X(2) = obj.X(2) + S * sin(mu);
-                obj.X(6) = obj.X(6) + S * sin(U(2)) / obj.WHEEL_BASE;
-                
-                % Assumes coordinate system is over front wheel
-                obj.X(7) = U(1) * cos(U(2));
-                obj.X(8) = U(1) * sin(U(2));
-                
-                obj.X(12) = U(1) * sin(U(2)) / obj.WHEEL_BASE;
-                
-                if(isreal(obj.X)&& obj.thisStateIsWithinLimits(obj.X) && ~obj.inCollision())
-                    
-                    % AHARS
-                    if (false)
-                    obj.ahars.step([obj.X;obj.a]);
-                    
-                    estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
-                    
-                    % GPS
-                    obj.gpsreceiver.step(obj.X);
-                    
-                    estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
-                    
-                    %return values
-                    obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
-                        estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-                    end
-                    obj.updateAdditional(U);
-                    
-                    % graphics      
-                    if(obj.graphicsOn)
-                        obj.graphics.update(obj.X);
-                        obj.updateAdditionalGraphics(obj.X);
-                    end
-                    
-                    obj.valid = 1;
-                else
-                    obj.eX = nan(20,1);
-                    obj.valid=0;
-                    
-                    obj.printStateNotValidError();
-                end                
+            if (length(US)~=2)
+                error('a 2 element column vector [wheel_speed, steer_angle] is expected as input ');
             end
+
+            % dynamics
+
+            S = US(1) * obj.dt;
+            mu = obj.X(6) + US(2);
+            obj.X(1) = obj.X(1) + S * cos(mu);
+            obj.X(2) = obj.X(2) + S * sin(mu);
+            obj.X(6) = obj.X(6) + S * sin(US(2)) / obj.WHEEL_BASE;
+
+            % Assumes coordinate system is over front wheel
+            obj.X(7) = US(1) * cos(US(2));
+            obj.X(8) = US(1) * sin(US(2));
+
+            obj.X(12) = US(1) * sin(US(2)) / obj.WHEEL_BASE;
         end        
     end
 end

@@ -12,6 +12,7 @@ classdef Entity<Steppable
         stateLimits; % 13 by 2 vector of allowed values of the state
         valid;       % the state of the platform is invalid
         graphicsOn;  % true if graphics is on
+        dynNoise;    % standard deviation of the noise dynamics
     end
     
     methods (Access = public)
@@ -110,7 +111,7 @@ classdef Entity<Steppable
             obj.X = X;
         end
         
-                function obj = reset(obj)
+        function obj = reset(obj)
             % resets all the platform subcomponents
             %
             % Example:
@@ -188,10 +189,16 @@ classdef Entity<Steppable
             to = min(size(X,1),size(obj.stateLimits,1));
             
             valid = all(X(1:to)>=obj.stateLimits(1:to,1)) && all(X(1:to)<=obj.stateLimits(1:to,2));
-        end
-   end
+        end        
+    end
  
-    methods (Access=protected)
+   methods (Access = protected)
+       % used by subclasses to define the behaviour
+       function obj = updateEntityState(obj, US)
+       end
+   end
+       
+    methods (Access = protected)
         
         function obj=resetAdditional(obj)
            % used by subclasses to reset additional stuff 
