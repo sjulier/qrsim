@@ -1,10 +1,9 @@
-classdef CarWaypointController<handle
+classdef CarWaypointController<Controller
     % A basic class which handles the waypoint controls for a vehicle
     %
     properties (Access=protected)
         wp;  % waypoints
         iwp; % index to current waypoint
-        DT;  % control timestep
         G;   % current steer angle
         V;   % speed
     end
@@ -18,15 +17,16 @@ classdef CarWaypointController<handle
     
     methods (Access = public)
         
-        function obj = CarWaypointController(wp, DT) 
+        function obj = CarWaypointController(controllerparams) 
             %  Creates a WaypointPID object:
             %      
             %  use:
             %    pid = WaypointPID(DT)
-            %      DT - control timestep (i.e. inverse of the control rate)
+            %      controllerparams.DT - control timestep (i.e. inverse of the control rate)
+            %      controllerparams.wp - set of waypoints
             %
-            obj.DT = DT;
-            obj.wp = wp;
+            obj = obj@Controller(controllerparams);
+            obj.wp = controllerparams.wp;
             obj.reset();
         end
         
