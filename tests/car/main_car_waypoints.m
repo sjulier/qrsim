@@ -16,7 +16,10 @@ N = 3000;
 wp = [0 200 200 0;0 0 200 200];
 
 % Waypoints controller
-controller = CarWaypointController(wp, state.DT);
+controllerparams.DT = state.DT;
+controllerparams.wp = wp;
+
+controller = CarWaypointController(controllerparams);
 
 tstart = tic;
 
