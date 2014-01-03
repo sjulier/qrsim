@@ -1,6 +1,6 @@
 classdef Platform<Entity
-    % Class that implements a platform. A platform extends an entity in
-    % some way! It's probably that it's instrumented in some manner.
+    % Class that implements a platform. A platform extends an entity by
+    % providing a potentially instrumented set of sensors.
     %
     
     properties (Access = protected)
@@ -18,7 +18,7 @@ classdef Platform<Entity
             %
             % Example:
             %
-            %   obj=Entity(objparams);
+            %   obj=Platform(objparams);
             
             obj=obj@Entity(objparams);
             
@@ -55,6 +55,77 @@ classdef Platform<Entity
                 else
                     obj.gpsreceiver = feval('GPSReceiver',objparams.sensors.gpsreceiver);
                 end                        
+            end
+        end
+        
+        function obj = setX(obj,X)
+            
+            % Call base function
+            obj = setX@Entity(obj,X);
+            
+            % set things
+            if (isfield(obj,'gpsreceiver'))
+                obj.gpsreceiver.setState(X);
+                obj.gpsreceiver.reset();
+            end
+            
+            if (isfield(obj,'ahars'))
+                obj.ahars.setState(X);
+                obj.ahars.reset();
+
+            end
+            
+            obj.a  = zeros(3,1);
+                        
+            % now rest to make sure components are initialised correctly
+            obj.resetAdditional();            
+            
+            obj.eX = zeros(20, 1);
+            
+            % get measurements
+            if (isfield(obj,'ahars'))
+                estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
+                obj.eX(4:6) = estimatedAHA(1:3);
+                obj.eX(10:12) = estimatedAHA(4:6);
+                obj.eX(14:17) = estimatedAHA(7:10);
+                obj.eX(20) = estimatedAHA(11);
+            end
+
+            % GPS
+            if (isfield(obj, 'gpsreceiver'))
+                estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
+                obj.eX(1:3) = estimatedPosNED(1:3);
+                obj.eX(18:19) = estimatedPosNED(4:5);
+            end
+        end
+        
+        function eX = getEX(obj,varargin)
+            % returns the estimated state (noisy)
+            % eX = [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
+            %
+            % Examples
+            %    allX = obj.getEX(); returns the whole estimated state vector
+            %  shortX = obj.getEX(1:3); returns only the first three elements of the estimated state vector
+            %
+            if(isempty(varargin))
+                eX = obj.eX;
+            else
+                eX = obj.eX(varargin{1});
+            end
+        end
+        
+        function X = getEXasX(obj,varargin)
+            % returns the estimated state (noisy) formatted as the noiseless state
+            % eX = [~px;~py;-~h;~phi;~theta;~psi;~u;~v;~w;~p;~q;~r]
+            %
+            % Examples
+            %    allX = obj.getEXasX(); returns the whole 12 elements state vector
+            %  shortX = obj.getEXasX(1:3); returns only the first three elements of the state vector
+            %
+            uvw = dcm(obj.X)*[obj.eX(18:19);-obj.eX(20)];
+            X = [obj.eX(1:2);-obj.eX(17);obj.eX(4:6);uvw;obj.eX(10:12)];
+            if(~isempty(varargin))
+                X = X(varargin{1});
             end
         end
     end
@@ -107,7 +178,8 @@ classdef Platform<Entity
                     obj.printStateNotValidError();
                 end                
             end
-        end        
+        end
+        
        function obj = updateSensors(obj, ~)
             obj.eX = zeros(19, 1);
            

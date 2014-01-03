@@ -1,4 +1,4 @@
-classdef Pelican<Platform
+classdef Pelican<AirbornePlatform
     % Class that implementatios dynamic and sensors of an AscTec Pelican quadrotor
     % The parameters are derived from the system identification of one of
     % the UCL quadrotors
@@ -51,10 +51,6 @@ classdef Pelican<Platform
         labels = {'px','py','pz','phi','theta','psi','u','v','w','p','q','r','thrust'};
     end
     
-    properties (Access = protected)
-        aerodynamicTurbulence;  % handle to the aerodynamic turbulence
-    end
-    
     methods (Access = public)
         function obj = Pelican(objparams)
             % constructs the platform object and initialises its subcomponent
@@ -84,147 +80,15 @@ classdef Pelican<Platform
             assert(isfield(objparams.sensors,'gpsreceiver')&&isfield(objparams.sensors.gpsreceiver,'on'),'pelican:nogpsreceiver',...
                 'the platform config file must define a gps receiver if not needed set gpsreceiver.on = 0');
 
-            obj=obj@Platform(objparams);
+            obj=obj@AirbornePlatform(objparams);
 
             obj.prngIds = [1;2;3;4;5;6] + obj.simState.numRStreams;
             obj.simState.numRStreams = obj.simState.numRStreams + 6;
-            
-            assert(isfield(objparams,'dynNoise'),'pelican:nodynnoise',...
-                'the platform config file must define the dynNoise parameter');
-            obj.dynNoise = objparams.dynNoise;
-            
-            %instantiation of sensor and wind objects, with some "manual" type checking
-            
-            % TURBULENCE
-            objparams.aerodynamicturbulence.DT = objparams.DT;
-            objparams.aerodynamicturbulence.dt = objparams.dt;
-            objparams.aerodynamicturbulence.state = objparams.state;
-            if(objparams.aerodynamicturbulence.on)
-                
-                assert(isfield(objparams.aerodynamicturbulence,'type'),'pelican:noaerodynamicturbulencetype',...
-                    'the platform config file must define an aerodynamicturbulence.type ');
-                
-                limits = obj.simState.environment.area.getLimits();
-                objparams.aerodynamicturbulence.zOrigin = limits(6);
-                
-                tmp = feval(objparams.aerodynamicturbulence.type, objparams.aerodynamicturbulence);
-                if(isa(tmp,'AerodynamicTurbulence'))
-                    obj.aerodynamicTurbulence = tmp;
-                else
-                    error('c.aerodynamicturbulence.type has to extend the class AerodynamicTurbulence');
-                end
-            else
-                obj.aerodynamicTurbulence = feval('AerodynamicTurbulence', objparams.aerodynamicturbulence);
-            end
-            
-        end
-        
-        function X = getX(obj,varargin)
-            % returns the state (noiseless)
-            % X = [px;py;pz;phi;theta;psi;u;v;w;p;q;r;thrust]
-            %
-            % Examples
-            %    allX = obj.getX(); returns the whole state vector
-            %  shortX = obj.getX(1:3); returns only the first three elements of teh state vector
-            %
-            if(isempty(varargin))
-                X = obj.X;
-            else
-                X = obj.X(varargin{1});
-            end
-        end
-        
-        function eX = getEX(obj,varargin)
-            % returns the estimated state (noisy)
-            % eX = [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
-            %
-            % Examples
-            %    allX = obj.getEX(); returns the whole estimated state vector
-            %  shortX = obj.getEX(1:3); returns only the first three elements of the estimated state vector
-            %
-            if(isempty(varargin))
-                eX = obj.eX;
-            else
-                eX = obj.eX(varargin{1});
-            end
         end
                 
-        function X = getEXasX(obj,varargin)
-            % returns the estimated state (noisy) formatted as the noiseless state
-            % eX = [~px;~py;-~h;~phi;~theta;~psi;~u;~v;~w;~p;~q;~r]
-            %
-            % Examples
-            %    allX = obj.getEXasX(); returns the whole 12 elements state vector
-            %  shortX = obj.getEXasX(1:3); returns only the first three elements of the state vector
-            %
-            uvw = dcm(obj.X)*[obj.eX(18:19);-obj.eX(20)];
-            X = [obj.eX(1:2);-obj.eX(17);obj.eX(4:6);uvw;obj.eX(10:12)];
-            if(~isempty(varargin))
-                X = X(varargin{1});
-            end
-        end
-        
         function iv = isValid(obj)
             % true if the state is valid
             iv = obj.valid;
-        end
-        
-        function obj = setX(obj,X)
-            % reinitialise the current state and noise
-            %
-            % Example:
-            %
-            %   obj.setState(X)
-            %       X - platform new state vector [px,py,pz,phi,theta,psi,u,v,w,p,q,r,thrust]
-            %           if the length of the X vector is 12, thrust is initialized automatically
-            %           if the length of the X vector is 6, all the velocities are set to zero
-            %
-            
-            assert((size(X,1)==6)||(size(X,1)==12)||(size(X,1)==13),'pelican:wrongsetstate',...
-                'setState() on a pelican object requires an input of length 6, 12 or 13 instead we have %d',size(X,1));
-            
-            assert(obj.thisStateIsWithinLimits(X),'pelican:settingoobstate',...
-                'the state passed through setState() is not valid (i.e. out of limits)');
-            
-            if(size(X,1)==6)
-                X = [X;zeros(6,1)];
-            end
-            
-            if(size(X,1)==12)
-                X = [X;abs(obj.MASS*obj.G)];
-            end
-            
-            obj.X = X;
-            
-            % set things
-            obj.gpsreceiver.setState(X);
-            obj.ahars.setState(X);            
-            obj.aerodynamicTurbulence.setState(obj.X);
-            
-            obj.a  = zeros(3,1);
-            
-            
-            % now rest to make sure components are initialised correctly
-            obj.gpsreceiver.reset();
-            obj.aerodynamicTurbulence.reset();
-            obj.ahars.reset();
-            obj.resetAdditional();            
-            
-            % get measurements
-            estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
-            estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
-            
-            obj.eX = [estimatedPosNED(1:3);estimatedAHA(1:3);zeros(3,1);...
-                estimatedAHA(4:6);0;estimatedAHA(7:10);estimatedPosNED(4:5);estimatedAHA(11)];
-            
-            obj.valid = 1;
-            
-            % clean the trajectory plot if any
-            if(obj.graphicsOn)
-                obj.graphics.reset();
-            end
-            
-            obj.bootstrapped = 1;
         end
     end
     

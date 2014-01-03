@@ -106,11 +106,6 @@ classdef Person<Entity
             
             obj.valid = 1;
             
-            % clean the trajectory plot if any
-            if(obj.graphicsOn)
-                obj.graphics.reset();
-            end
-            
             obj.bootstrapped = 1;
         end        
     end
@@ -133,11 +128,7 @@ classdef Person<Entity
             
             if(obj.valid)
                 % dynamics; chug in a straight line at constant speed!
-                
-                %[obj.X obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
-                
-%                obj.bb = obj.bb - repmat(obj.X(1:3),1,4);
-                
+                                
                 obj.X(1:3) = obj.X(1:3) + obj.dt * obj.X(7:9);
                 
 %                obj.bb = repmat(obj.X(1:3),1,4)+obj.bb;

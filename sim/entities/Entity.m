@@ -13,6 +13,7 @@ classdef Entity<Steppable
         valid;       % the state of the platform is invalid
         graphicsOn;  % true if graphics is on
         dynNoise;    % standard deviation of the noise dynamics
+        physicalSize;% the physical size of the object
     end
     
     methods (Access = public)
@@ -23,7 +24,7 @@ classdef Entity<Steppable
             %
             % Example:
             %
-            %   obj=Platform(objparams);
+            %   obj=Entity(objparams);
             %                objparams.dt - timestep of this object
             %                objparams.on - 1 if the object is active
             %                objparams.sensors.ahars - ahrs parameters
@@ -33,6 +34,9 @@ classdef Entity<Steppable
             %                objparams.collisionDistance - distance from any other object that defines a collision
             %                objparams.dynNoise -  standard deviation of the noise dynamics
             %                objparams.state - handle to simulator state
+            %                objparams.physicalSize - the physical size of
+            %                the entity (length of sides of axis-aligned
+            %                bounding box?)
             %
             
             obj=obj@Steppable(objparams);
@@ -49,7 +53,16 @@ classdef Entity<Steppable
                 obj.behaviourIfStateNotValid = objparams.behaviourIfStateNotValid;
             end
 
-            
+            if(isfield(objparams,'physicalSize'))
+                obj.physicalSize = objparams.physicalSize;
+            else
+                obj.physicalSize = zeros(3, 1);
+            end
+                        
+            assert(isfield(objparams,'dynNoise'),'entity:nodynnoise',...
+                'the platform config file must define the dynNoise parameter');
+            obj.dynNoise = objparams.dynNoise;
+                        
             % GRAPHICS
             assert(isfield(objparams,'graphics')&&isfield(objparams.graphics,'on'),'entity:nographics',...
                 'the platform config file must define a graphics parameter if not needed set graphics.on = 0');
@@ -83,10 +96,8 @@ classdef Entity<Steppable
             else
                 X = obj.X(varargin{1});
             end
-        end        
-    end
-    
-    methods (Access = public)        
+        end
+        
         function obj = setX(obj,X)
             % reinitialise the current state and noise
             %
@@ -109,6 +120,16 @@ classdef Entity<Steppable
                 X = [X; zeros(6,1)];
             end
             obj.X = X;
+
+            % update the graphics (if enabled)
+            if(obj.graphicsOn)
+                obj.graphics.reset();
+            end
+            
+            obj.valid = 1;
+            
+            obj.bootstrapped = 1;
+
         end
         
         function obj = reset(obj)
@@ -124,6 +145,10 @@ classdef Entity<Steppable
         function d = getCollisionDistance(obj)
             % returns collision distance
             d = obj.collisionD;
+        end
+        
+        function physicalSize = getPhysicalSize(obj)
+            physicalSize = obj.physicalSize;
         end
     end   
 

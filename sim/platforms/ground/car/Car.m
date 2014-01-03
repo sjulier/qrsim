@@ -113,15 +113,10 @@ classdef Car<Platform
             %           if the length of the X vector is 6, all the velocities are set to zero
             %
             
-            obj = setX@Entity(obj,X);
+            obj = setX@Platform(obj,X);
             
             obj.valid = 1;
-            
-            % clean the trajectory plot if any
-            if(obj.graphicsOn)
-                obj.graphics.reset();
-            end
-            
+
             obj.bootstrapped = 1;
         end
     end
