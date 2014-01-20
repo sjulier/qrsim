@@ -64,7 +64,7 @@ classdef IndepObsModel<handle
             obj.prngId = objparams.prngId;
             obj.camParams.f = objparams.f;
             obj.camParams.c = objparams.c;
-            obj.personSize = objparams.psize;
+            %obj.personSize = objparams.psize;
         end
         
         function obj = reset(obj)

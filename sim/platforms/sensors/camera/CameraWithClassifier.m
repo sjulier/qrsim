@@ -73,7 +73,7 @@ classdef CameraWithClassifier < Sensor
             
             obsmodelparams.prngId = obj.simState.numRStreams+1;
             obj.simState.numRStreams = obj.simState.numRStreams + 1;
-            obsmodelparams.psize = obj.simState.environment.area.getPersonSize();
+            %obsmodelparams.psize = obj.simState.environment.area.getPersonSize();
             obsmodelparams.f = objparams.f;
             obsmodelparams.c = objparams.c;
             obsmodelparams.simState = obj.simState;

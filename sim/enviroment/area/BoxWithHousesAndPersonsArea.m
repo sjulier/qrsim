@@ -194,7 +194,10 @@ classdef BoxWithHousesAndPersonsArea<Area
                 end
                 
                 % add the person to the array
-                obj.persons{i}=Person(center,obj.personSize);
+                personparams.psize = obj.personSize;
+                obj.persons{i}=Person(personparams);%(center,obj.personSize);
+                obj.persons{i}.setX(center);
+                obj.persons{i}.on = 1;
             end
             
             obj.found = zeros(1,numPersons);
