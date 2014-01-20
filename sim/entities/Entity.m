@@ -108,17 +108,26 @@ classdef Entity<Steppable
             %           if the length of the X vector is 6, all the velocities are set to zero
             %
             
-            assert((size(X,1)==4)||(size(X,1)==6)||(size(X,1)==12),'entity:wrongsetstate',...
-                'setState() on an entity requires an input of length 4 or 6 instead we have %d',size(X,1));
+            assert((size(X,1)==4)||(size(X,1)==6)||(size(X,1)==12)||(size(X,1)==13),'entity:wrongsetstate',...
+                'setState() on an entity object requires an input of length 4, 6, 12 or 13 instead we have %d',size(X,1));
+            
+            X
             
             assert(obj.thisStateIsWithinLimits(X),'entity:settingoobstate',...
                 'the state passed through setState() is not valid (i.e. out of limits)');
-            
+
             if(size(X,1)==4)
                 X = [X;zeros(2,1)];
-            elseif (size(X,1)==6)
-                X = [X; zeros(6,1)];
             end
+            
+            if(size(X,1)==6)
+                X = [X;zeros(6,1)];
+            end
+            
+            if(size(X,1)==12)
+                X = [X;abs(obj.MASS*obj.G)];
+            end
+            
             obj.X = X;
 
             % update the graphics (if enabled)
@@ -178,6 +187,11 @@ classdef Entity<Steppable
         
         function obj = printStateNotValidError(obj)
             % display state error info
+            
+            obj.X
+            dbstack
+            keyboard
+            
             if(strcmp(obj.behaviourIfStateNotValid,'continue'))
                 
             else

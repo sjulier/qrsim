@@ -156,6 +156,9 @@ classdef Platform<Entity
             
             if(obj.valid)
                 
+                disp('Going in...')
+                obj.X
+                
                 % do scaling of inputs
                 US = obj.scaleControls(U);
                 

@@ -50,8 +50,8 @@ classdef AirbornePlatform<Platform
 
             % Call base function
             obj = setX@Platform(obj,X);
-            size(obj.X)
-            keyboard
+%            size(obj.X)
+%            keyboard
         end
     end
 end
