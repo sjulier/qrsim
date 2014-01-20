@@ -41,8 +41,6 @@ classdef AirbornePlatform<Platform
             else
                 obj.aerodynamicTurbulence = feval('AerodynamicTurbulence', objparams.aerodynamicturbulence);
             end
-            
-
         end
         
         function obj = setX(obj,X)
@@ -51,7 +49,9 @@ classdef AirbornePlatform<Platform
             obj.aerodynamicTurbulence.reset();
 
             % Call base function
-            obj = setX@Platform(obj,X);            
+            obj = setX@Platform(obj,X);
+            size(obj.X)
+            keyboard
         end
     end
 end
