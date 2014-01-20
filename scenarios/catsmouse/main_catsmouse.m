@@ -54,19 +54,20 @@ for i=1:state.task.durationInSteps,
     % as soon as possible and not simply at the end of the allotted time.)
     for j=1:state.task.Nc,
         % vector to the mouse
-        u = mousePos - state.platforms{j}.getEX(1:2);
+        u = mousePos - state.platforms{j}.getEX(1:2)
         
         % if far away add a weighted velocity to "predict" where the mouse will be
-        u = u  + (norm(u)/2)*state.platforms{state.task.Nc+1}.getEX(18:19);
+        u = u  + (norm(u)/2)*state.platforms{state.task.Nc+1}.getEX(18:19)
         
         % keep away from other cats if closer than 2*collisionDistance
         for k = 1:state.task.Nc,
+            disp(['k=',num2str(k)]);
             % one should alway make sure that the uav is valid 
             % i.e. no collision or out of area event happened
             if(state.platforms{k}.isValid())                  
                 d = state.platforms{j}.getEX(1:2) - state.platforms{k}.getEX(1:2);
                 if((k~=j)&&(norm(d)<2*state.platforms{j}.getCollisionDistance()))
-                    u = u + (1/(norm(d)-state.platforms{j}.getCollisionDistance()))*(d/norm(d));
+                     u = u + (1/(norm(d)-state.platforms{j}.getCollisionDistance()))*(d/norm(d));
                 end
             end
         end

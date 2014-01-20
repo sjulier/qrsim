@@ -133,27 +133,24 @@ classdef Pelican<AirbornePlatform
             %wind and turbulence this closely mimic the Simulink example "Lightweight Airplane Design"
             % asbSkyHogg/Environment/WindModels
             
-            obj.X'
-            
             if (size(US,1)~=5)
                 error('a 5 element column vector [-2048..2048;-2048..2048;0..4096;-2048..2048;9..12] is expected as input ');
             end
             
-            meanWind = obj.simState.environment.wind.getLinear(obj.X)
+            meanWind = obj.simState.environment.wind.getLinear(obj.X);
 
             obj.aerodynamicTurbulence.step(obj.X);
-            turbWind = obj.aerodynamicTurbulence.getLinear(obj.X)
+            turbWind = obj.aerodynamicTurbulence.getLinear(obj.X);
 
             accNoise = obj.dynNoise.*[randn(obj.simState.rStreams{obj.prngIds(1)},1,1);
                                       randn(obj.simState.rStreams{obj.prngIds(2)},1,1);
                                       randn(obj.simState.rStreams{obj.prngIds(3)},1,1);
                                       randn(obj.simState.rStreams{obj.prngIds(4)},1,1);
                                       randn(obj.simState.rStreams{obj.prngIds(5)},1,1);
-                                      randn(obj.simState.rStreams{obj.prngIds(6)},1,1)]
+                                      randn(obj.simState.rStreams{obj.prngIds(6)},1,1)];
 
             % dynamics
             [obj.X, obj.a] = ruku2('pelicanODE', obj.X, [US;meanWind + turbWind; obj.MASS; accNoise], obj.dt);
-            keyboard
         end        
     end
 end

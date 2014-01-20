@@ -64,13 +64,13 @@ classdef Platform<Entity
             obj = setX@Entity(obj,X);
             
             % set things
-            if (isfield(obj,'gpsreceiver'))
-                obj.gpsreceiver.setState(X);
+            if (~isempty(obj.gpsreceiver))
+                obj.gpsreceiver.setState(obj.X);
                 obj.gpsreceiver.reset();
             end
             
-            if (isfield(obj,'ahars'))
-                obj.ahars.setState(X);
+            if (~isempty(obj.ahars))
+                obj.ahars.setState(obj.X);
                 obj.ahars.reset();
 
             end
@@ -83,7 +83,7 @@ classdef Platform<Entity
             obj.eX = zeros(20, 1);
             
             % get measurements
-            if (isfield(obj,'ahars'))
+            if (~isempty(obj.ahars))
                 estimatedAHA = obj.ahars.getMeasurement([obj.X;obj.a]);
                 obj.eX(4:6) = estimatedAHA(1:3);
                 obj.eX(10:12) = estimatedAHA(4:6);
@@ -92,13 +92,13 @@ classdef Platform<Entity
             end
 
             % GPS
-            if (isfield(obj, 'gpsreceiver'))
+            if (~isempty(obj.gpsreceiver))
                 estimatedPosNED = obj.gpsreceiver.getMeasurement(obj.X);
                 obj.eX(1:3) = estimatedPosNED(1:3);
                 obj.eX(18:19) = estimatedPosNED(4:5);
             end
-        end
-        
+        end        
+
         function eX = getEX(obj,varargin)
             % returns the estimated state (noisy)
             % eX = [~px;~py;~pz;~phi;~theta;~psi;0;0;0;~p;~q;~r;0;~ax;~ay;~az;~h;~pxdot;~pydot;~hdot]
